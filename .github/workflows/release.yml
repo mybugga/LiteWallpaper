@@ -1,0 +1,52 @@
+name: Release
+
+# Push a tag like v1.2.3 to build LiteWallpaper and publish it as a GitHub release.
+# Running copies pick the new release up through their built-in updater.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.2.3); creates the tag v<version>'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.version }}' } else { '${{ github.ref_name }}' }
+          $v = $v.TrimStart('v')
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "Version must look like 1.2.3, got '$v'" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Build
+        shell: cmd
+        run: build.bat ${{ steps.version.outputs.version }}
+
+      # The updater looks for an asset named LiteWallpaper-<version>.zip with LiteWallpaper.exe at its root.
+      - name: Package
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          New-Item -ItemType Directory -Force stage, dist | Out-Null
+          Copy-Item LiteWallpaper.exe, README.md stage/
+          Copy-Item shaders, particles stage/ -Recurse
+          Compress-Archive -Path stage/* -DestinationPath "dist/LiteWallpaper-$v.zip"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: LiteWallpaper ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: dist/*

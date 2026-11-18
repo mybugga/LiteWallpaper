@@ -1,0 +1,13 @@
+# Build output
+build/
+dist/
+stage/
+*.exe
+*.obj
+
+# Personal settings and logs (the app keeps its real settings in %APPDATA%\LiteWallpaper)
+/wallpaper.ini
+/profiles/
+*.log
+
+.claude/
