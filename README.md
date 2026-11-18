@@ -38,6 +38,8 @@ The app stops completely (no drawing, no timers, memory paged out) when any of t
 | On battery | `pause_on_battery` |
 | PC locked, or display turned off | always |
 
+The first line of the tray menu shows why it's paused, for example "Paused (game.exe is fullscreen)". Only windows you can actually see count as fullscreen. Hidden, cloaked or fully transparent full-screen windows, which some GPU overlays and laptop utilities leave in the foreground, are ignored.
+
 On top of that, the process runs at below-normal CPU priority with Windows' Eco mode, at below-normal GPU scheduling priority, and at the lowest DXGI GPU thread priority. Games get the hardware first.
 
 Measured on an RTX 4070 Ti at 2560×1440:

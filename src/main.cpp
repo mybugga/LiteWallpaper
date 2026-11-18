@@ -126,22 +126,65 @@ bool Covers(const RECT& a, const RECT& b) {
     return a.left <= b.left && a.top <= b.top && a.right >= b.right && a.bottom >= b.bottom;
 }
 
-// Exclusive fullscreen, borderless fullscreen, presentations, F11 browsers.
-bool FullscreenAppActive() {
-    QUERY_USER_NOTIFICATION_STATE q;
-    if (SUCCEEDED(SHQueryUserNotificationState(&q)) &&
-        (q == QUNS_RUNNING_D3D_FULL_SCREEN || q == QUNS_BUSY || q == QUNS_PRESENTATION_MODE))
-        return true;
+std::wstring WindowExeName(HWND h) {
+    DWORD pid = 0;
+    GetWindowThreadProcessId(h, &pid);
+    std::wstring name;
+    if (HANDLE p = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid)) {
+        wchar_t path[MAX_PATH * 2];
+        DWORD size = ARRAYSIZE(path);
+        if (QueryFullProcessImageNameW(p, 0, path, &size)) name = FileName(path);
+        CloseHandle(p);
+    }
+    return name.empty() ? L"an app" : name;
+}
 
+// A window someone can actually see: not hidden, cloaked (another virtual desktop, a suspended
+// UWP app), click-through or fully transparent. Laptops especially have invisible full-screen
+// helper windows (GPU overlays, OEM utilities) that can end up with the focus.
+bool ActuallyVisible(HWND h) {
+    if (!IsWindowVisible(h) || IsIconic(h)) return false;
+    BOOL cloaked = FALSE;
+    DwmGetWindowAttribute(h, DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
+    if (cloaked) return false;
+    LONG ex = GetWindowLongW(h, GWL_EXSTYLE);
+    if (ex & (WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE)) return false;
+    BYTE alpha = 255;
+    DWORD flags = 0;
+    if ((ex & WS_EX_LAYERED) && GetLayeredWindowAttributes(h, nullptr, &alpha, &flags) && (flags & LWA_ALPHA) && alpha == 0)
+        return false;
+    return true;
+}
+
+// The exe of a game or app running fullscreen (exclusive or borderless, presentations, F11
+// browsers), or "" when there's none. Windows' own "busy" state isn't used: it's also set by
+// presentation/Focus settings and by invisible full-screen windows, and paused the wallpaper for good.
+std::wstring FullscreenApp() {
     HWND fg = GetForegroundWindow();
-    if (!fg || IsShellWindow(fg) || IsOwnWindow(fg) || IsIconic(fg)) return false;
-    // An ordinary maximized window with a title bar isn't "fullscreen", even with an auto-hide taskbar.
-    if (IsZoomed(fg) && (GetWindowLongW(fg, GWL_STYLE) & WS_CAPTION) == WS_CAPTION) return false;
+    QUERY_USER_NOTIFICATION_STATE q = QUNS_ACCEPTS_NOTIFICATIONS;
+    if (SUCCEEDED(SHQueryUserNotificationState(&q)) && q == QUNS_RUNNING_D3D_FULL_SCREEN)
+        return fg ? WindowExeName(fg) : L"a game";  // exclusive fullscreen Direct3D
+    if (q == QUNS_PRESENTATION_MODE) return L"presentation mode";
+
+    if (!fg || IsShellWindow(fg) || IsOwnWindow(fg) || !ActuallyVisible(fg)) return L"";
+    // A maximized window isn't "fullscreen", even with an auto-hide taskbar; if it hides the
+    // desktop, "pause when covered" handles it.
+    if (IsZoomed(fg)) return L"";
     HMONITOR mon = MonitorFromWindow(fg, MONITOR_DEFAULTTONULL);
     MONITORINFO mi{sizeof(mi)};
-    if (!mon || !GetMonitorInfoW(mon, &mi)) return false;
+    if (!mon || !GetMonitorInfoW(mon, &mi)) return L"";
     RECT r;
-    return GetWindowRect(fg, &r) && Covers(r, mi.rcMonitor);
+    if (FAILED(DwmGetWindowAttribute(fg, DWMWA_EXTENDED_FRAME_BOUNDS, &r, sizeof(r))) && !GetWindowRect(fg, &r)) return L"";
+    if (!Covers(r, mi.rcMonitor)) return L"";
+    wchar_t cls[128] = L"";
+    GetClassNameW(fg, cls, ARRAYSIZE(cls));
+    std::wstring app = WindowExeName(fg);
+    static HWND logged = nullptr;  // once per window, so the log says what it was
+    if (fg != logged) {
+        logged = fg;
+        Log(L"Fullscreen: %s (window class %s, %ld,%ld %ldx%ld)", app.c_str(), cls, r.left, r.top, r.right - r.left, r.bottom - r.top);
+    }
+    return app;
 }
 
 // lp = one region per screen holding the part of its work area no window has covered yet.
@@ -207,7 +250,7 @@ std::wstring RunningPauseApp() {
 
 // A game or other fullscreen app, or a program the user listed, is running: whatever the pause
 // settings say, this is no time for an update to restart the app.
-bool Gaming() { return FullscreenAppActive() || (!S.cfg.pauseApps.empty() && !RunningPauseApp().empty()); }
+bool Gaming() { return !FullscreenApp().empty() ||(!S.cfg.pauseApps.empty() && !RunningPauseApp().empty()); }
 
 void ApplyActivity() {
     double now = Now();
@@ -234,7 +277,8 @@ void UpdatePause() {
     else if (S.locked) reason = L"Paused (locked)";
     else if (S.displayOff) reason = L"Paused (display off)";
     else if (S.cfg.pauseOnBattery && GetSystemPowerStatus(&ps) && ps.ACLineStatus == 0) reason = L"Paused (on battery)";
-    else if (S.cfg.pauseOnFullscreen && FullscreenAppActive()) reason = L"Paused (fullscreen app)";
+    else if (std::wstring app = S.cfg.pauseOnFullscreen ? FullscreenApp() : L""; !app.empty())
+        reason = L"Paused (" + app + L" is fullscreen)";
     else if (!S.cfg.pauseApps.empty()) {
         std::wstring app = RunningPauseApp();
         if (!app.empty()) reason = L"Paused (" + app + L" is running)";
