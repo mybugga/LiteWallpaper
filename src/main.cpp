@@ -708,7 +708,8 @@ LRESULT CALLBACK MainProc(HWND h, UINT msg, WPARAM w, LPARAM l) {
         return 0;
 
     case WM_APP_UPDATE:
-        OnUpdateCheckDone(h);
+        OnUpdateCheckDone(SettingsWindow() ? SettingsWindow() : h);  // dialogs in front of the settings window
+        RefreshUpdateButton();
         if (S.paused) TrimWorkingSet();
         return 0;
 

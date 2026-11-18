@@ -23,8 +23,8 @@ constexpr int kSideW = 150, kTopH = 100, kBottomH = 56, kRowH = 36, kLabelW = 16
 enum : int { IDC_WALLPAPER = 10, IDC_BROWSE, IDC_SECTIONS, IDC_RESET, IDC_OPENFILE, IDC_PROFILE, IDC_SAVEPROFILE,
              IDC_DELPROFILE, IDC_ROW = 1000 };
 
-enum class Store { General, Default, Particle, Shader, Startup, StartupAll, AutoUpdate };
-enum class Kind { Slider, Check, Color, Combo, Text, File };
+enum class Store { General, Default, Particle, Shader, Startup, StartupAll, AutoUpdate, None };
+enum class Kind { Slider, Check, Color, Combo, Text, File, Button };
 enum class Type { Shader, Particles, Picture };
 
 struct Choice {
@@ -248,6 +248,11 @@ LRESULT CtlColor(UINT msg, HDC dc, HWND c) {
 // ---------------------------------------------------------------------------------------------
 // Sections
 
+const wchar_t* VersionLabel() {
+    static const std::wstring label = L"Version " + AppVersion();
+    return label.c_str();
+}
+
 std::vector<Row> GeneralRows() {
     return {
         {.kind = Kind::Slider, .label = L"Frame rate", .store = Store::General, .key = "fps", .def = "30", .min = 10, .max = 144, .unit = L" fps"},
@@ -258,6 +263,7 @@ std::vector<Row> GeneralRows() {
         {.kind = Kind::Check, .label = L"Start with Windows", .store = Store::Startup, .key = "startup"},
         {.kind = Kind::Check, .label = L"Start for all users of this PC (needs admin)", .store = Store::StartupAll, .key = "startup_all"},
         {.kind = Kind::Check, .label = L"Update automatically", .store = Store::AutoUpdate, .key = "auto_update"},
+        {.kind = Kind::Button, .label = VersionLabel(), .store = Store::None, .key = "check_updates"},
     };
 }
 
@@ -357,6 +363,7 @@ Json GetValue(Store st, const char* key, const char* def) {
     if (st == Store::Startup) return Json::Of(StartupEnabled());
     if (st == Store::StartupAll) return Json::Of(AllUsersStartupEnabled());
     if (st == Store::AutoUpdate) return Json::Of(AutoUpdateEnabled());
+    if (st == Store::None) return Json();
     if (st == Store::Particle) {
         const Json& j = Json::AtPath(U.particles, key);
         if (&j == &Json::Missing()) return ParseOr(def);
@@ -536,6 +543,10 @@ void ShowSection(int index) {
             U.page.push_back(r.clear);
             break;
         }
+        case Kind::Button:  // "Check for updates" (same as the tray menu item); off in dev builds
+            r.ctl = MakeButton(UpdatesSupported() ? UpdateMenuText().c_str() : L"Updates are off in dev builds", ctlX, cy, Px(220), ctlH, id);
+            EnableWindow(r.ctl, UpdatesSupported() && !UpdateBusy());
+            break;
         }
         U.page.push_back(r.ctl);
 
@@ -554,6 +565,20 @@ void ShowSection(int index) {
     EnableWindow(U.reset, resettable);
     EnableWindow(U.openFile, U.type != Type::Picture);
 }
+
+}  // namespace
+
+// The "Check for updates" button follows the updater (checking, ready to install, ...).
+void RefreshUpdateButton() {
+    if (!U.wnd || U.current >= (int)U.secs.size()) return;
+    for (auto& r : U.secs[U.current].rows)
+        if (r.kind == Kind::Button && r.ctl && UpdatesSupported()) {
+            SetWindowTextW(r.ctl, UpdateMenuText().c_str());
+            EnableWindow(r.ctl, !UpdateBusy());
+        }
+}
+
+namespace {
 
 std::wstring IniSource() {
     wchar_t buf[MAX_PATH * 2];
@@ -800,6 +825,13 @@ void OnRowCommand(int id, int code) {
         if (code == CBN_SELCHANGE) {
             int sel = (int)SendMessageW(r.ctl, CB_GETCURSEL, 0, 0);
             if (sel >= 0 && sel < (int)r.choices.size()) SetValue(r.store, r.key, Json::Of(std::string(r.choices[sel].value)));
+        }
+        break;
+    case Kind::Button:
+        if (code == BN_CLICKED) {
+            UpdateMenuCommand(U.wnd);
+            SetWindowTextW(r.ctl, UpdateMenuText().c_str());
+            EnableWindow(r.ctl, !UpdateBusy());
         }
         break;
     case Kind::Text:

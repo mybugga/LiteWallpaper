@@ -104,6 +104,7 @@ void CleanUpOldUpdate();
 // ---- settings_ui.cpp ----
 void ShowSettings();
 HWND SettingsWindow();  // nullptr when closed
+void RefreshUpdateButton();
 
 // ---- desktop.cpp ----
 struct DesktopHost {

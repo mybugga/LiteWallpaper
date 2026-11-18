@@ -21,7 +21,7 @@ Both update themselves the same way.
 
 LiteWallpaper keeps itself up to date from this repository's releases. About a minute and a half after it starts, and then every 6 hours, it asks GitHub for the latest release. When there is a newer one, it downloads it in the background and checks the download against the SHA-256 that GitHub publishes for it. It then replaces its own files and restarts, which takes about a second. It never does this while a game or other fullscreen app is running, or while the settings window is open; it waits for the next quiet moment. Your settings and profiles live in `%APPDATA%\LiteWallpaper`, so updates never touch them.
 
-- **Check for updates** in the tray menu checks right away and asks before installing.
+- **Check for updates**, in the tray menu or in Settings > General next to the version number, checks right away and asks before installing.
 - **Update automatically** (Settings, General) turns off the background checks. You can still update from the tray menu.
 - If the app is somewhere only admins can write, such as `C:\Program Files\LiteWallpaper` (used by **Start for all users**), you get a notification instead. Choose **Install update** in the tray menu to install it, which asks for admin rights once.
 - Builds you make yourself with plain `build.bat` are "dev" builds, which never update themselves.
