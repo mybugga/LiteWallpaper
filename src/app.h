@@ -101,6 +101,9 @@ void FinishUpdate(DWORD oldPid);  // first start after an update: waits for the 
 void ShowUpdatedNotice();
 void CleanUpOldUpdate();
 
+// ---- render.cpp: LiteWallpaper.exe --render, frames for the README previews ----
+int RenderFrames(int argc, wchar_t** argv);
+
 // ---- gallery.cpp: grid of live wallpaper previews ----
 void ShowGallery();        // opens it in its own process
 int RunGalleryWindow();    // that process: LiteWallpaper.exe --gallery-window

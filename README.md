@@ -8,6 +8,28 @@ A small animated wallpaper for Windows 10/11: one exe of about 600 KB, with no r
 - Runs on every monitor, and each monitor can have its own wallpaper.
 - Draws behind the desktop icons; icons and clicks behave normally.
 
+<p align="center"><img src="docs/gallery.gif" width="720" alt="The wallpaper gallery: the selected wallpaper plays large, every other one is a live tile below"></p>
+
+A few of the bundled wallpapers:
+
+<table>
+<tr>
+<td align="center"><img src="docs/previews/ribbon.gif" width="280" alt="Ribbon"><br><sub>Ribbon</sub></td>
+<td align="center"><img src="docs/previews/skull.gif" width="280" alt="Skull"><br><sub>Skull</sub></td>
+<td align="center"><img src="docs/previews/car.gif" width="280" alt="Car"><br><sub>Car</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/previews/sakura_pond.gif" width="280" alt="Sakura pond"><br><sub>Sakura pond</sub></td>
+<td align="center"><img src="docs/previews/snowglobe.gif" width="280" alt="Snowglobe"><br><sub>Snowglobe</sub></td>
+<td align="center"><img src="docs/previews/waterfall.gif" width="280" alt="Waterfall"><br><sub>Waterfall</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/previews/astronaut_galaxy.gif" width="280" alt="Astronaut galaxy"><br><sub>Astronaut galaxy</sub></td>
+<td align="center"><img src="docs/previews/watch.gif" width="280" alt="Watch"><br><sub>Watch</sub></td>
+<td align="center"><img src="docs/previews/planet_neon.gif" width="280" alt="Planet neon"><br><sub>Planet neon</sub></td>
+</tr>
+</table>
+
 ## Download
 
 From the [latest release](https://github.com/mybugga/LiteWallpaper/releases/latest), get either:
@@ -145,6 +167,8 @@ The NASA/ESA images are public domain; the astronaut photos are your own images.
 ## Build
 
 `build.bat` needs Visual Studio 2022 or newer with "Desktop development with C++". It finds the compiler itself. `build.bat 1.2.3` stamps a version into the exe; without one you get a "dev" build.
+
+The animated previews above come from the wallpapers themselves: `scripts\make-previews.ps1` (needs ffmpeg) runs `LiteWallpaper.exe --render <wallpaper> <out.bgra> <width> <height> <seconds> <fps>` for each one, which draws it offscreen at an exact frame rate, and turns the frames into looping GIFs in `docs\previews`. Pass `-Names` to remake only some.
 
 ## Releasing
 

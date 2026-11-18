@@ -1172,6 +1172,14 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdLine, int) {
         LocalFree(argv);
         return code;
     }
+    // Offscreen frames of a wallpaper for preview animations (scripts\make-previews.ps1).
+    if (argv && argc >= 4 && !wcscmp(argv[1], L"--render")) {
+        CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        int code = RenderFrames(argc, argv);
+        CoUninitialize();
+        LocalFree(argv);
+        return code;
+    }
     // The wallpaper gallery runs in its own process, so its memory goes back to Windows when it closes.
     if (argv && argc >= 2 && !wcscmp(argv[1], L"--gallery-window")) {
         LocalFree(argv);
