@@ -18,7 +18,7 @@ namespace {
 constexpr UINT WM_TRAY = WM_APP + 1;
 constexpr UINT_PTR kTimerPoll = 1, kTimerRebuild = 2, kTimerReload = 3, kTimerUpdate = 4;
 constexpr UINT kFirstUpdateCheck = 90 * 1000, kUpdateCheckEvery = 6 * 3600 * 1000, kUpdateRetry = 10 * 60 * 1000;
-enum : UINT { ID_STATUS = 100, ID_PAUSE, ID_SETTINGS, ID_EDITFILE, ID_RELOAD, ID_FOLDER, ID_DATAFOLDER, ID_STARTUP,
+enum : UINT { ID_STATUS = 100, ID_PAUSE, ID_SETTINGS, ID_GALLERY, ID_EDITFILE, ID_RELOAD, ID_FOLDER, ID_DATAFOLDER, ID_STARTUP,
                ID_STARTUPALL, ID_VERSION, ID_UPDATE, ID_EXIT, ID_WALLPAPER = 1000, ID_PROFILE = 2000 };
 
 const wchar_t kAppName[] = L"LiteWallpaper";
@@ -588,6 +588,7 @@ void ShowMenu() {
     AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(m, MF_STRING, ID_SETTINGS, L"Settings...");
     SetMenuDefaultItem(m, ID_SETTINGS, FALSE);
+    AppendMenuW(m, MF_STRING, ID_GALLERY, L"Wallpaper gallery...");
     AppendMenuW(m, MF_POPUP, (UINT_PTR)WallpaperMenu(), L"Wallpaper");
     AppendMenuW(m, MF_POPUP, (UINT_PTR)ProfileMenu(), L"Profile");
     AppendMenuW(m, MF_STRING | (S.userPaused ? MF_CHECKED : 0), ID_PAUSE, L"Pause");
@@ -646,6 +647,7 @@ LRESULT CALLBACK MainProc(HWND h, UINT msg, WPARAM w, LPARAM l) {
             UpdatePause();
             break;
         case ID_SETTINGS: ShowSettings(); break;
+        case ID_GALLERY: ShowGallery(); break;
         case ID_EDITFILE:
             ShellExecuteW(nullptr, L"open", L"notepad.exe", (L"\"" + ConfigPath() + L"\"").c_str(), nullptr, SW_SHOWNORMAL);
             break;
@@ -1085,8 +1087,8 @@ std::wstring CurrentSource() { return ResolvePath(S.cfg.def.source); }
 void RequestReload() { SetTimer(g_mainWnd, kTimerReload, 150, nullptr); }
 
 HICON AppIcon(bool large) {
-    static HICON big = LoadAppIcon(true);
-    return large ? big : S.nid.hIcon;
+    static HICON bigIcon = LoadAppIcon(true), smallIcon = LoadAppIcon(false);
+    return large ? bigIcon : S.nid.hIcon ? S.nid.hIcon : smallIcon;
 }
 
 void ShowNotice(const std::wstring& title, const std::wstring& text) { ShowBalloon(title, text, NIIF_INFO); }
@@ -1170,6 +1172,16 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdLine, int) {
         LocalFree(argv);
         return code;
     }
+    // The wallpaper gallery runs in its own process, so its memory goes back to Windows when it closes.
+    if (argv && argc >= 2 && !wcscmp(argv[1], L"--gallery-window")) {
+        LocalFree(argv);
+        SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        LoadActiveProfile();
+        CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+        int code = RunGalleryWindow();
+        CoUninitialize();
+        return code;
+    }
     // Run by the uninstaller: close a running copy and drop this user's "Start with Windows" entries.
     if (argv && argc >= 2 && !wcscmp(argv[1], L"--uninstall")) {
         LocalFree(argv);
@@ -1191,7 +1203,8 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdLine, int) {
         if (wcsstr(cmdLine, L"--exit")) {
             ExitRunningCopy();
         } else if (HWND other = FindWindowW(kMainClass, nullptr); other && !autostart) {
-            PostMessageW(other, WM_COMMAND, ID_SETTINGS, 0);  // a second sign-in task finding us already up stays quiet
+            // a second sign-in task finding us already up stays quiet
+            PostMessageW(other, WM_COMMAND, wcsstr(cmdLine, L"--gallery") ? ID_GALLERY : ID_SETTINGS, 0);
         }
         return 0;
     }
@@ -1239,6 +1252,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdLine, int) {
         if (updated) ShowUpdatedNotice();
     }
     if (wcsstr(cmdLine, L"--settings")) ShowSettings();
+    if (wcsstr(cmdLine, L"--gallery")) ShowGallery();
     int code = Run();
 
     WTSUnRegisterSessionNotification(g_mainWnd);

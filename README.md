@@ -55,7 +55,13 @@ Measured on an RTX 4070 Ti at 2560×1440:
 
 ## Use
 
-Run `LiteWallpaper.exe`. It lives in the tray: right-click it to pick a wallpaper from the **Wallpaper** menu (every bundled shader and particles preset), pause, open the app folder or your settings folder, start with Windows (for you or for everyone), or exit.
+Run `LiteWallpaper.exe`. It lives in the tray: right-click it to open the **Wallpaper gallery**, pick a wallpaper from the **Wallpaper** menu (every bundled shader and particles preset), pause, open the app folder or your settings folder, start with Windows (for you or for everyone), or exit.
+
+### Wallpaper gallery
+
+**Wallpaper gallery...** in the tray menu (or `LiteWallpaper.exe --gallery`) shows every wallpaper as a live preview. The one you select plays large at the top, with what it shows and a **Set as wallpaper** button, over a blurred copy of itself; **Customize** opens its settings. Click a tile to preview it, double-click it or press Enter to use it, and use the arrow keys to move around. Type anywhere to search, and use the tabs for shaders or particles only. **Open file...** takes your own shader, particles config, video, GIF or image.
+
+The gallery is a separate process that exists only while it's open, so the wallpaper itself stays small. Only the tiles on screen run, at small size, and closing the gallery gives all its memory back to Windows.
 
 ### Settings window
 
@@ -85,7 +91,7 @@ Ticking **Start with Windows** creates a Task Scheduler task, `LiteWallpaper (<y
 
 Your tweaks are stored in the profile's ini under `[override:<file>]`, and the preset files themselves are never changed. **Reset to defaults** removes the tweaks for the current wallpaper. The window is plain Win32, using no memory until opened, and gives everything back when closed. It uses a dark theme throughout (title bar, controls, dropdowns, the tray menu). The only exceptions are the Windows color picker, the file picker, and confirmation boxes, which follow your Windows theme. Double-click the tray icon to pause or resume. There are no hotkeys.
 
-Settings are in `%APPDATA%\LiteWallpaper\wallpaper.ini`, which is created on first run. Saving the file applies changes immediately, and so does saving a shader file you're using.
+Settings are in `%APPDATA%\LiteWallpaper\wallpaper.ini`, which is created on first run. Saving the file applies changes immediately, and so does saving a shader file you're using. Compiled shaders are cached in `%LOCALAPPDATA%\LiteWallpaper\shaders`, so a shader is only compiled again after it (or a file it includes) changes; deleting that folder is always safe.
 
 ```ini
 [default]
@@ -97,7 +103,7 @@ scale = 0.5                    ; shader render resolution (0.1 - 1.0)
 source = shaders\starfield.hlsl
 ```
 
-`LiteWallpaper.exe --settings` opens the settings window, and `LiteWallpaper.exe --exit` closes a running copy (and waits until it has). `--diag` writes the desktop window layout and status changes to `LiteWallpaper.log` in your settings folder.
+`LiteWallpaper.exe --settings` opens the settings window, `--gallery` opens the wallpaper gallery, and `LiteWallpaper.exe --exit` closes a running copy (and waits until it has). `--diag` writes the desktop window layout and status changes to `LiteWallpaper.log` in your settings folder.
 
 ## particles.js effects
 

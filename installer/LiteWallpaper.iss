@@ -94,6 +94,8 @@ begin
   // Each user's settings and profiles live in %APPDATA%\LiteWallpaper.
   if CurUninstallStep = usPostUninstall then
   begin
+    // Compiled shader cache: rebuilt whenever it's missing, so it always goes.
+    DelTree(ExpandConstant('{localappdata}\{#AppName}'), True, True, True);
     DataDir := ExpandConstant('{userappdata}\{#AppName}');
     if DirExists(DataDir) and not UninstallSilent then
       if MsgBox('Also remove your LiteWallpaper settings and profiles?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then

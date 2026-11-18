@@ -368,7 +368,7 @@ private:
         auto sim = std::make_unique<Sim>();
         sim->screen = &s;
         sim->rc = s.rc;
-        float dpi = s.hwnd ? GetDpiForWindow(s.hwnd) / 96.0f : 1.0f;
+        float dpi = s.previewScale > 0 ? s.previewScale : s.hwnd ? GetDpiForWindow(s.hwnd) / 96.0f : 1.0f;
         if (dpi <= 0) dpi = 1;
         sim->s = cfg_;
         // retina_detect: simulate in device pixels with sizes scaled up, exactly like the library.

@@ -26,8 +26,9 @@ float lava(float3 c) { return saturate(((c.r - c.b) / max(c.r, 0.02) - 0.6) * 3.
 float3 lavaEmbers(float2 q, float t, float cell, float size, float seed) {
     float3 col = 0;
     float2 base = floor(q / cell);
-    [unroll] for (int dy = -2; dy <= 2; dy++)
-    [unroll] for (int dx = -2; dx <= 2; dx++) {
+    // Real loops: unrolled, three calls of this grid took the compiler 40 s.
+    [loop] for (int dy = -2; dy <= 2; dy++)
+    [loop] for (int dx = -2; dx <= 2; dx++) {
         float2 id = base + float2(dx, dy);
         float2 spawn = (id + float2(hash21(id + seed + 1.0), hash21(id + seed + 2.0))) * cell;
         float period = 1.6 + 1.6 * hash21(id + seed + 3.0);

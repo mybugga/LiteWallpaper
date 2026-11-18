@@ -2,6 +2,7 @@
 #include <d3dcompiler.h>
 #include <mfapi.h>
 #include <mfmediaengine.h>
+#include <shlobj.h>
 #include <wincodec.h>
 #include <algorithm>
 #include <cmath>
@@ -67,12 +68,81 @@ struct ShaderAdjust {
     float speed = 1, hue = 0, saturation = 1, brightness = 1;
 };
 
+static bool ReadFileBytes(const std::wstring& path, std::string& out);
+
+// Compiled shaders are cached per user in %LOCALAPPDATA%\LiteWallpaper\shaders\<hash>.cso, keyed
+// by the source, everything it #includes and the compiler target. The compiler (several MB, and up
+// to seconds per shader) then only loads when a shader actually changed, which keeps both the
+// wallpaper and the gallery's live previews light.
+static uint64_t Fnv(uint64_t h, const std::string& s) {
+    for (unsigned char c : s) h = (h ^ c) * 1099511628211ull;
+    return h;
+}
+
+static uint64_t HashIncludes(uint64_t h, const std::string& code, const std::wstring& dir, int depth) {
+    if (depth > 6) return h;
+    for (size_t at = code.find("#include"); at != std::string::npos; at = code.find("#include", at + 8)) {
+        size_t eol = code.find('\n', at), q1 = code.find('"', at), q2 = q1 == std::string::npos ? q1 : code.find('"', q1 + 1);
+        if (q2 == std::string::npos || q2 > eol) continue;
+        std::wstring file = dir + Utf8ToWide(code.substr(q1 + 1, q2 - q1 - 1));
+        std::replace(file.begin(), file.end(), L'/', L'\\');
+        std::string text;
+        if (!ReadFileBytes(file, text)) continue;
+        h = HashIncludes(Fnv(h, text), text, file.substr(0, file.find_last_of(L'\\') + 1), depth + 1);
+    }
+    return h;
+}
+
+static std::wstring ShaderCacheFile(const std::string& src, const std::wstring& shaderPath, const char* target) {
+    static const std::wstring dir = [] {
+        PWSTR p = nullptr;
+        std::wstring d;
+        if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &p))) d = std::wstring(p) + L"\\LiteWallpaper";
+        CoTaskMemFree(p);
+        if (!d.empty()) {
+            CreateDirectoryW(d.c_str(), nullptr);
+            d += L"\\shaders";
+            CreateDirectoryW(d.c_str(), nullptr);
+        }
+        return d;
+    }();
+    if (dir.empty()) return L"";
+    uint64_t h = Fnv(14695981039346656037ull, std::string("d3dcompiler_47 O3 v1 ") + target);
+    h = Fnv(h, src);
+    if (!shaderPath.empty()) h = HashIncludes(h, src, shaderPath.substr(0, shaderPath.find_last_of(L"\\/") + 1), 0);
+    wchar_t name[32];
+    swprintf_s(name, L"\\%016llx.cso", (unsigned long long)h);
+    return dir + name;
+}
+
+static void WriteFileAtomically(const std::wstring& path, const void* data, size_t size) {
+    std::wstring tmp = path + L"." + std::to_wstring(GetCurrentThreadId()) + L".tmp";
+    HANDLE f = CreateFileW(tmp.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (f == INVALID_HANDLE_VALUE) return;
+    DWORD written = 0;
+    bool ok = WriteFile(f, data, (DWORD)size, &written, nullptr) && written == size;
+    CloseHandle(f);
+    if (!ok || !MoveFileExW(tmp.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING)) DeleteFileW(tmp.c_str());
+}
+
 class ShaderSource final : public Source {
 public:
     explicit ShaderSource(const ShaderAdjust& adjust = {}) : adjust_(adjust) {}
 
-    bool Compile(Gpu& gpu, const std::string& code, const std::string& name, const Config& cfg, std::wstring& err) {
+    // path: the shader file ("" for the built-in one), for finding the files it #includes.
+    bool Compile(Gpu& gpu, const std::string& code, const std::string& name, const std::wstring& path, const Config& cfg,
+                 std::wstring& err) {
         interval_ = 1.0 / cfg.fps;
+        std::string src = kShaderHeader;
+        src += "#line 1 \"" + name + "\"\n" + code + "\n" + kShaderFooter;
+        const char* target = gpu.dev->GetFeatureLevel() >= D3D_FEATURE_LEVEL_11_0 ? "ps_5_0" : "ps_4_0";
+
+        std::wstring cache = ShaderCacheFile(src, path, target);
+        std::string cached;
+        if (!cache.empty() && ReadFileBytes(cache, cached) && cached.size() > 4 &&
+            SUCCEEDED(gpu.dev->CreatePixelShader(cached.data(), cached.size(), nullptr, &ps_)))
+            return true;
+
         // Load the compiler only for the moment we need it; it's several MB we'd otherwise keep mapped.
         HMODULE dll = LoadLibraryW(L"d3dcompiler_47.dll");
         auto compile = dll ? (PFN_D3DCompile)GetProcAddress(dll, "D3DCompile") : nullptr;
@@ -81,13 +151,11 @@ public:
             if (dll) FreeLibrary(dll);
             return false;
         }
-        std::string src = kShaderHeader;
-        src += "#line 1 \"" + name + "\"\n" + code + "\n" + kShaderFooter;
-        const char* target = gpu.dev->GetFeatureLevel() >= D3D_FEATURE_LEVEL_11_0 ? "ps_5_0" : "ps_4_0";
         ComPtr<ID3DBlob> blob, errors;
         HRESULT hr = compile(src.data(), src.size(), name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain",
                              target, D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &blob, &errors);
         if (SUCCEEDED(hr)) hr = gpu.dev->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &ps_);
+        if (SUCCEEDED(hr) && !cache.empty()) WriteFileAtomically(cache, blob->GetBufferPointer(), blob->GetBufferSize());
         if (FAILED(hr)) {
             if (errors) {
                 std::string e((const char*)errors->GetBufferPointer(), errors->GetBufferSize());
@@ -313,6 +381,10 @@ ID3D11ShaderResourceView* Picture::Srv(Gpu& gpu) {
     return p.srv.Get();
 }
 
+static thread_local UINT t_maxTextureSide = 5120;
+
+void SetTextureSizeLimit(UINT maxSide) { t_maxTextureSide = maxSide ? maxSide : 5120; }
+
 bool Picture::Load(Gpu& gpu, const std::wstring& path, std::wstring& err) {
     Impl& p = *p_;
     ComPtr<IWICImagingFactory> wic;
@@ -353,7 +425,7 @@ bool Picture::Load(Gpu& gpu, const std::wstring& path, std::wstring& err) {
     }
     frame->GetSize(&p.cw, &p.ch);
     ComPtr<IWICBitmapSource> bmp = frame;
-    const UINT maxSide = 5120;
+    const UINT maxSide = t_maxTextureSide;
     if (std::max(p.cw, p.ch) > maxSide) {
         double k = (double)maxSide / std::max(p.cw, p.ch);
         UINT nw = std::max(1u, (UINT)(p.cw * k)), nh = std::max(1u, (UINT)(p.ch * k));
@@ -605,7 +677,7 @@ std::unique_ptr<Source> CreateSource(Gpu& gpu, const std::wstring& path, const C
         adjust.saturation = std::max(0.0f, IniFloat(section, L"saturation", 1));
         adjust.brightness = std::max(0.0f, IniFloat(section, L"brightness", 1));
         auto s = std::make_unique<ShaderSource>(adjust);
-        if (!s->Compile(gpu, code, Narrow(path), cfg, error)) return nullptr;
+        if (!s->Compile(gpu, code, Narrow(path), path, cfg, error)) return nullptr;
         const char* texOptions[] = {"texture", "texture1"};
         for (int i = 0; i < 2; i++) {
             std::string tex = ShaderOption(code, texOptions[i]);
@@ -634,6 +706,6 @@ std::unique_ptr<Source> CreateSource(Gpu& gpu, const std::wstring& path, const C
 
 std::unique_ptr<Source> CreateBuiltinSource(Gpu& gpu, const Config& cfg, std::wstring& error) {
     auto s = std::make_unique<ShaderSource>();
-    if (!s->Compile(gpu, kBuiltinShader, "builtin", cfg, error)) return nullptr;
+    if (!s->Compile(gpu, kBuiltinShader, "builtin", L"", cfg, error)) return nullptr;
     return s;
 }

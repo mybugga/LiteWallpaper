@@ -36,8 +36,8 @@ rc /nologo %RCDEF% /fo build\app.res src\app.rc || exit /b 1
 cl /nologo /O2 /MT /EHsc /std:c++20 /utf-8 /W3 /DUNICODE /D_UNICODE %VERDEF% /Ibuild src\*.cpp /Fobuild\ /Fe:LiteWallpaper.exe build\app.res ^
    /link /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /MANIFEST:EMBED /MANIFESTINPUT:src\app.manifest ^
    user32.lib gdi32.lib shell32.lib ole32.lib oleaut32.lib advapi32.lib d3d11.lib dxgi.lib dwmapi.lib wtsapi32.lib ^
-   windowscodecs.lib mfplat.lib mfuuid.lib comctl32.lib comdlg32.lib taskschd.lib uxtheme.lib winhttp.lib bcrypt.lib delayimp.lib ^
+   windowscodecs.lib mfplat.lib mfuuid.lib comctl32.lib comdlg32.lib taskschd.lib uxtheme.lib winhttp.lib bcrypt.lib d2d1.lib dwrite.lib dxguid.lib delayimp.lib ^
    /DELAYLOAD:mfplat.dll /DELAYLOAD:windowscodecs.dll /DELAYLOAD:wtsapi32.dll /DELAYLOAD:comdlg32.dll ^
-   /DELAYLOAD:winhttp.dll /DELAYLOAD:bcrypt.dll || exit /b 1
+   /DELAYLOAD:winhttp.dll /DELAYLOAD:bcrypt.dll /DELAYLOAD:d2d1.dll /DELAYLOAD:dwrite.dll || exit /b 1
 
 echo Built LiteWallpaper.exe

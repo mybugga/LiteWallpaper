@@ -101,6 +101,10 @@ void FinishUpdate(DWORD oldPid);  // first start after an update: waits for the 
 void ShowUpdatedNotice();
 void CleanUpOldUpdate();
 
+// ---- gallery.cpp: grid of live wallpaper previews ----
+void ShowGallery();        // opens it in its own process
+int RunGalleryWindow();    // that process: LiteWallpaper.exe --gallery-window
+
 // ---- settings_ui.cpp ----
 void ShowSettings();
 HWND SettingsWindow();  // nullptr when closed
@@ -138,6 +142,7 @@ struct Screen {
     float scale = 1;      // back buffer scale the swap chain was created with
     bool covered = false;
     bool needsDraw = true;
+    float previewScale = 0;  // gallery tiles: particles.js pixels -> screen pixels (0 = from the window's DPI)
 };
 
 struct Gpu {
@@ -202,6 +207,8 @@ public:
 };
 
 std::unique_ptr<Source> CreateSource(Gpu& gpu, const std::wstring& path, const Config& cfg, std::wstring& error);
+// Largest image side loaded by sources created on the calling thread (gallery previews load small).
+void SetTextureSizeLimit(UINT maxSide);
 std::unique_ptr<Source> CreateBuiltinSource(Gpu& gpu, const Config& cfg, std::wstring& error);
 
 // ---- particles.cpp ----
