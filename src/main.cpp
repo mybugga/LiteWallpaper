@@ -1,4 +1,5 @@
 #include "app.h"
+#include <commctrl.h>
 #include <dwmapi.h>
 #include <shellapi.h>
 #include <shlobj.h>
@@ -65,42 +66,11 @@ void TrimWorkingSet() { SetProcessWorkingSetSize(GetCurrentProcess(), (SIZE_T)-1
 // Tray
 // ---------------------------------------------------------------------------------------------
 
-HICON MakeIcon(int size) {
-    BITMAPV5HEADER bi{};
-    bi.bV5Size = sizeof(bi);
-    bi.bV5Width = size;
-    bi.bV5Height = -size;
-    bi.bV5Planes = 1;
-    bi.bV5BitCount = 32;
-    bi.bV5Compression = BI_BITFIELDS;
-    bi.bV5RedMask = 0x00FF0000;
-    bi.bV5GreenMask = 0x0000FF00;
-    bi.bV5BlueMask = 0x000000FF;
-    bi.bV5AlphaMask = 0xFF000000;
-    void* bits = nullptr;
-    HDC dc = GetDC(nullptr);
-    HBITMAP color = CreateDIBSection(dc, (BITMAPINFO*)&bi, DIB_RGB_COLORS, &bits, nullptr, 0);
-    ReleaseDC(nullptr, dc);
-    if (!color) return LoadIconW(nullptr, IDI_APPLICATION);
-
-    auto* px = (uint32_t*)bits;
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
-            float u = (x + 0.5f) / size, v = (y + 0.5f) / size;
-            float r = std::sqrt((u - 0.5f) * (u - 0.5f) + (v - 0.5f) * (v - 0.5f));
-            float a = std::clamp((0.47f - r) * size, 0.0f, 1.0f);
-            float wave = 0.55f + 0.12f * std::sin(u * 9.4f);
-            float band = std::exp(-std::pow((v - wave) * 6.0f, 2.0f));
-            float R = 25 + 90 * v + 90 * band, G = 190 - 120 * v + 60 * band, B = 160 + 70 * v + 25 * band;
-            auto c = [](float f) { return (uint32_t)std::clamp(f, 0.0f, 255.0f); };
-            px[y * size + x] = (c(a * 255) << 24) | (c(R) << 16) | (c(G) << 8) | c(B);
-        }
-    }
-    HBITMAP mask = CreateBitmap(size, size, 1, 1, nullptr);
-    ICONINFO ii{TRUE, 0, 0, mask, color};
-    HICON icon = CreateIconIndirect(&ii);
-    DeleteObject(mask);
-    DeleteObject(color);
+// The ribbon icon embedded by app.rc, at the size the current DPI calls for.
+HICON LoadAppIcon(bool large) {
+    HICON icon = nullptr;
+    if (FAILED(LoadIconMetric(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(1), large ? LIM_LARGE : LIM_SMALL, &icon)))
+        icon = LoadIconW(nullptr, IDI_APPLICATION);
     return icon;
 }
 
@@ -116,7 +86,7 @@ void AddTray() {
     S.nid.uID = 1;
     S.nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     S.nid.uCallbackMessage = WM_TRAY;
-    if (!S.nid.hIcon) S.nid.hIcon = MakeIcon(GetSystemMetrics(SM_CXSMICON));
+    if (!S.nid.hIcon) S.nid.hIcon = LoadAppIcon(false);
     swprintf_s(S.nid.szTip, L"%s - %s", kAppName, S.status.c_str());
     Shell_NotifyIconW(NIM_ADD, &S.nid);
 }
@@ -930,7 +900,7 @@ std::wstring KnownFolder(REFKNOWNFOLDERID id) {
     return out;
 }
 
-// Other users can't open files inside someone's user folder (C:\Users\<name>\...).
+// Other users can't open files inside someone's user profile folder.
 bool InUserProfiles(const std::wstring& path) {
     std::wstring profiles = ToLower(KnownFolder(FOLDERID_UserProfiles)) + L"\\";
     return profiles.size() > 1 && ToLower(path).rfind(profiles, 0) == 0;
@@ -1069,9 +1039,74 @@ std::wstring CurrentSource() { return ResolvePath(S.cfg.def.source); }
 
 void RequestReload() { SetTimer(g_mainWnd, kTimerReload, 150, nullptr); }
 
-HICON AppIcon() { return S.nid.hIcon; }
+HICON AppIcon(bool large) {
+    static HICON big = LoadAppIcon(true);
+    return large ? big : S.nid.hIcon;
+}
 
 void ShowNotice(const std::wstring& title, const std::wstring& text) { ShowBalloon(title, text, NIIF_INFO); }
+
+namespace {
+
+// --exit / --uninstall: asks the running copy to close and waits until it has, so an installer can
+// replace its files straight after. onlyThisCopy: leave a copy that runs from somewhere else alone.
+void ExitRunningCopy(bool onlyThisCopy = false) {
+    HWND other = FindWindowW(kMainClass, nullptr);
+    if (!other) return;
+    DWORD pid = 0;
+    GetWindowThreadProcessId(other, &pid);
+    HANDLE proc = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (onlyThisCopy) {
+        wchar_t path[MAX_PATH * 2] = L"";
+        DWORD size = ARRAYSIZE(path);
+        if (!proc || !QueryFullProcessImageNameW(proc, 0, path, &size) || _wcsicmp(path, OwnExe().c_str())) {
+            if (proc) CloseHandle(proc);
+            return;
+        }
+    }
+    PostMessageW(other, WM_COMMAND, ID_EXIT, 0);
+    if (proc) {
+        WaitForSingleObject(proc, 10000);
+        CloseHandle(proc);
+    }
+}
+
+// The exe a sign-in task starts, or "" when there's no such task.
+std::wstring TaskExe(const std::wstring& name) {
+    ComPtr<ITaskService> svc;
+    ComPtr<ITaskFolder> root;
+    ComPtr<IRegisteredTask> task;
+    ComPtr<ITaskDefinition> def;
+    ComPtr<IActionCollection> actions;
+    ComPtr<IAction> action;
+    ComPtr<IExecAction> exec;
+    BSTR path = nullptr;
+    if (!ConnectTasks(svc, root) || FAILED(root->GetTask(Bstr(name.c_str()), &task)) || FAILED(task->get_Definition(&def)) ||
+        FAILED(def->get_Actions(&actions)) || FAILED(actions->get_Item(1, &action)) || FAILED(action.As(&exec)) ||
+        FAILED(exec->get_Path(&path)) || !path)
+        return L"";
+    std::wstring out = path;
+    SysFreeString(path);
+    return out;
+}
+
+// --uninstall, run by the uninstaller: closes this copy and removes this user's "Start with Windows"
+// entries if they start this copy (not a portable one elsewhere).
+int UninstallCommand() {
+    ExitRunningCopy(true);
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    std::wstring exe = OwnExe();
+    if (!_wcsicmp(TaskExe(UserTaskName()).c_str(), exe.c_str())) DeleteTask(UserTaskName());
+    wchar_t run[MAX_PATH * 2 + 32] = L"";
+    DWORD size = sizeof(run);
+    if (RegGetValueW(HKEY_CURRENT_USER, kRunKey, kAppName, RRF_RT_REG_SZ, nullptr, run, &size) == ERROR_SUCCESS &&
+        ToLower(run).find(ToLower(exe)) != std::wstring::npos)
+        RegDeleteKeyValueW(HKEY_CURRENT_USER, kRunKey, kAppName);
+    CoUninitialize();
+    return 0;
+}
+
+}  // namespace
 
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdLine, int) {
     // Elevated helper started by SetAllUsersStartup: do that one job and leave.
@@ -1085,10 +1120,15 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdLine, int) {
         return code;
     }
     // Elevated helper started by the updater when the app folder needs admin rights to write.
-    if (argv && argc >= 5 && !wcscmp(argv[1], L"--install-update")) {
-        int code = InstallUpdateCommand(argv[2], argv[3], argv[4]);
+    if (argv && argc >= 6 && !wcscmp(argv[1], L"--install-update")) {
+        int code = InstallUpdateCommand(argv[2], argv[3], argv[4], argv[5]);
         LocalFree(argv);
         return code;
+    }
+    // Run by the uninstaller: close a running copy and drop this user's "Start with Windows" entries.
+    if (argv && argc >= 2 && !wcscmp(argv[1], L"--uninstall")) {
+        LocalFree(argv);
+        return UninstallCommand();
     }
     // Started by the updater: let the old version exit first, then take over.
     const bool updated = argv && argc >= 3 && !wcscmp(argv[1], L"--updated");
@@ -1103,9 +1143,11 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdLine, int) {
 
     HANDLE mutex = CreateMutexW(nullptr, TRUE, L"Local\\LiteWallpaper.SingleInstance");
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
-        HWND other = FindWindowW(kMainClass, nullptr);
-        if (other && !autostart)  // a second sign-in task finding us already up stays quiet
-            PostMessageW(other, WM_COMMAND, wcsstr(cmdLine, L"--exit") ? ID_EXIT : ID_SETTINGS, 0);
+        if (wcsstr(cmdLine, L"--exit")) {
+            ExitRunningCopy();
+        } else if (HWND other = FindWindowW(kMainClass, nullptr); other && !autostart) {
+            PostMessageW(other, WM_COMMAND, ID_SETTINGS, 0);  // a second sign-in task finding us already up stays quiet
+        }
         return 0;
     }
     if (wcsstr(cmdLine, L"--exit")) return 0;

@@ -78,7 +78,7 @@ bool StartupEnabled();  // for the signed-in user
 void SetStartup(bool enable);
 bool AllUsersStartupEnabled();  // machine-wide sign-in task for every user
 bool SetAllUsersStartup(bool enable, HWND owner);  // asks for admin rights; false if it didn't happen
-HICON AppIcon();
+HICON AppIcon(bool large = false);
 
 void ShowNotice(const std::wstring& title, const std::wstring& text);  // tray notification
 bool AutoUpdateEnabled();  // [app] auto_update in the user's wallpaper.ini (on unless turned off)
@@ -95,7 +95,8 @@ bool UpdateWaiting();  // downloaded and installable without admin rights
 bool InstallStagedUpdate(HWND owner, bool interactive);  // replaces the files and restarts the app
 std::wstring UpdateMenuText();
 void UpdateMenuCommand(HWND owner);
-int InstallUpdateCommand(const std::wstring& staged, const std::wstring& dir, const std::wstring& exeName);  // elevated
+int InstallUpdateCommand(const std::wstring& staged, const std::wstring& dir, const std::wstring& exeName,
+                         const std::wstring& version);  // elevated
 void FinishUpdate(DWORD oldPid);  // first start after an update: waits for the old process
 void ShowUpdatedNotice();
 void CleanUpOldUpdate();

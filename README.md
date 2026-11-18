@@ -1,6 +1,8 @@
+<p align="center"><img src="docs/logo.png" width="128" alt="LiteWallpaper logo"></p>
+
 # LiteWallpaper
 
-A small animated wallpaper for Windows 10/11: one exe of about 600 KB, with no installer and no runtime to install.
+A small animated wallpaper for Windows 10/11: one exe of about 600 KB, with no runtime to install.
 
 - **Shaders** (`.hlsl`), **particles.js effects** (`.json`), **videos** (`.mp4 .mkv .webm .mov .wmv .avi`), **GIFs**, and **images**.
 - Runs on every monitor, and each monitor can have its own wallpaper.
@@ -8,7 +10,12 @@ A small animated wallpaper for Windows 10/11: one exe of about 600 KB, with no i
 
 ## Download
 
-Get `LiteWallpaper-<version>.zip` from the [latest release](https://github.com/mybugga/LiteWallpaper/releases/latest). Unzip it anywhere, for example `%LOCALAPPDATA%\LiteWallpaper`, and run `LiteWallpaper.exe`.
+From the [latest release](https://github.com/mybugga/LiteWallpaper/releases/latest), get either:
+
+- **`LiteWallpaper-<version>-setup.exe`**: the installer. It installs for you only, in `%LOCALAPPDATA%\Programs\LiteWallpaper`, without asking for admin rights, and adds LiteWallpaper to the Start menu and to Settings > Apps for uninstalling. It can also install for all users, in Program Files. Uninstalling closes the app and removes its "Start with Windows" entry, and asks whether to delete your settings too.
+- **`LiteWallpaper-<version>.zip`**: the portable version. Unzip it anywhere and run `LiteWallpaper.exe`.
+
+Both update themselves the same way.
 
 ## Updates
 
@@ -88,7 +95,7 @@ scale = 0.5                    ; shader render resolution (0.1 - 1.0)
 source = shaders\starfield.hlsl
 ```
 
-`LiteWallpaper.exe --settings` opens the settings window, and `LiteWallpaper.exe --exit` closes a running copy. `--diag` writes the desktop window layout and status changes to `LiteWallpaper.log` in your settings folder.
+`LiteWallpaper.exe --settings` opens the settings window, and `LiteWallpaper.exe --exit` closes a running copy (and waits until it has). `--diag` writes the desktop window layout and status changes to `LiteWallpaper.log` in your settings folder.
 
 ## particles.js effects
 
@@ -133,7 +140,7 @@ The NASA/ESA images are public domain; the astronaut photos are your own images.
 
 ## Releasing
 
-Push a tag such as `v1.2.3`. The `Release` workflow builds the exe with that version, zips it with `shaders\` and `particles\` as `LiteWallpaper-1.2.3.zip`, and publishes a GitHub release. Every installed copy then picks it up through the updater. You can also start the workflow by hand from the Actions tab and type the version in.
+Push a tag such as `v1.2.3`. The `Release` workflow builds the exe with that version, zips it with `shaders\` and `particles\` as `LiteWallpaper-1.2.3.zip`, builds the installer `LiteWallpaper-1.2.3-setup.exe` from the same files (`installer\LiteWallpaper.iss`, Inno Setup 6), and publishes a GitHub release with both. Every installed copy then picks it up through the updater. Releases are only ever built on GitHub, and both workflows run `scripts/check-binary.ps1`, which fails the build if the exe contains a user name, computer name, user-profile path or debug-symbols path. You can also start the workflow by hand from the Actions tab and type the version in.
 
 ## How it works
 

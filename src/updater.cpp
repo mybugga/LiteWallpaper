@@ -302,9 +302,30 @@ void CopyFiles(const std::wstring& from, const std::wstring& to, bool top) {
     FindClose(h);
 }
 
+// Installed with the setup: point Settings > Apps at the new version. Only the uninstall entry
+// whose folder is `dir` is touched (per-user installs are in HKCU, all-users ones in HKLM).
+void UpdateUninstallEntry(const std::wstring& dir, const std::wstring& version) {
+    for (HKEY hive : {HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE}) {
+        HKEY key;
+        if (RegOpenKeyExW(hive, LW_UNINSTALL_KEY, 0, KEY_QUERY_VALUE | KEY_SET_VALUE | KEY_WOW64_64KEY, &key) != ERROR_SUCCESS)
+            continue;
+        wchar_t location[MAX_PATH * 2] = L"";
+        DWORD size = sizeof(location);
+        if (RegGetValueW(key, nullptr, L"InstallLocation", RRF_RT_REG_SZ, nullptr, location, &size) == ERROR_SUCCESS) {
+            std::wstring loc = location;
+            while (!loc.empty() && loc.back() == L'\\') loc.pop_back();
+            if (!_wcsicmp(loc.c_str(), dir.c_str()))
+                RegSetValueExW(key, L"DisplayVersion", 0, REG_SZ, (const BYTE*)version.c_str(),
+                               (DWORD)((version.size() + 1) * sizeof(wchar_t)));
+        }
+        RegCloseKey(key);
+    }
+}
+
 // Installs an unpacked release over `dir`, whose exe is called `exeName`. The running exe can't be
 // overwritten but can be renamed, so it moves aside to <name>.old and is deleted on the next start.
-bool InstallFiles(const std::wstring& staged, const std::wstring& dir, const std::wstring& exeName) {
+bool InstallFiles(const std::wstring& staged, const std::wstring& dir, const std::wstring& exeName,
+                  const std::wstring& version) {
     CopyFiles(staged, dir, true);
     std::wstring exe = dir + L"\\" + exeName, old = exe + L".old";
     DeleteFileW(old.c_str());
@@ -318,6 +339,7 @@ bool InstallFiles(const std::wstring& staged, const std::wstring& dir, const std
         MoveFileExW(old.c_str(), exe.c_str(), 0);
         return false;
     }
+    UpdateUninstallEntry(dir, version);
     return true;
 }
 
@@ -394,7 +416,7 @@ bool InstallStagedUpdate(HWND owner, bool interactive) {
     std::wstring exe = OwnExePath(), dir = ExeDir(), exeName = FileName(exe);
 
     if (CanWrite(dir)) {
-        if (!InstallFiles(staged, dir, exeName)) {
+        if (!InstallFiles(staged, dir, exeName, version)) {
             if (interactive) MessageBoxW(owner, L"Couldn't install the update. See LiteWallpaper.log in your settings folder.",
                                          L"LiteWallpaper updates", MB_OK | MB_ICONWARNING);
             std::lock_guard<std::mutex> g(Upd.lock);
@@ -414,7 +436,7 @@ bool InstallStagedUpdate(HWND owner, bool interactive) {
                        L"Right-click the tray icon and choose \"Install update\". It needs admin rights.");
         return false;
     } else {
-        std::wstring args = L"--install-update \"" + staged + L"\" \"" + dir + L"\" \"" + exeName + L"\"";
+        std::wstring args = L"--install-update \"" + staged + L"\" \"" + dir + L"\" \"" + exeName + L"\" " + version;
         SHELLEXECUTEINFOW sei{sizeof(sei)};
         sei.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC;
         sei.hwnd = owner;
@@ -448,9 +470,10 @@ bool InstallStagedUpdate(HWND owner, bool interactive) {
     return true;
 }
 
-int InstallUpdateCommand(const std::wstring& staged, const std::wstring& dir, const std::wstring& exeName) {
+int InstallUpdateCommand(const std::wstring& staged, const std::wstring& dir, const std::wstring& exeName,
+                         const std::wstring& version) {
     if (exeName.empty() || exeName.find_first_of(L"\\/") != std::wstring::npos) return 2;
-    return InstallFiles(staged, dir, exeName) ? 0 : 1;
+    return InstallFiles(staged, dir, exeName, version) ? 0 : 1;
 }
 
 void FinishUpdate(DWORD oldPid) {

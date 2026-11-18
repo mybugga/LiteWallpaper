@@ -3,7 +3,14 @@ rem build.bat [version]   e.g. "build.bat 1.2.0". Without a version it's a "dev"
 setlocal
 cd /d "%~dp0"
 set "VERDEF="
-if not "%~1"=="" set "VERDEF=/DLW_VERSION=\"%~1\""
+set "RCDEF="
+if "%~1"=="" goto :tools
+set "VER=%~1"
+set "VERNUM=%VER:.=,%,0"
+set "VERDEF=/DLW_VERSION=\"%VER%\""
+set "RCDEF=/dLW_VERNUM=%VERNUM% /dLW_VERSTR=\"%VER%\""
+
+:tools
 
 where cl >nul 2>nul
 if not errorlevel 1 goto :build
@@ -24,8 +31,9 @@ fxc /nologo /T ps_4_0 /E PSParticle /Fh build\part_ps.h /Vn g_PSParticle src\par
 fxc /nologo /T vs_4_0 /E VSLine /Fh build\line_vs.h /Vn g_VSLine src\particles.hlsl >nul || exit /b 1
 fxc /nologo /T ps_4_0 /E PSLine /Fh build\line_ps.h /Vn g_PSLine src\particles.hlsl >nul || exit /b 1
 fxc /nologo /T ps_4_0 /E PSBackground /Fh build\bg_ps.h /Vn g_PSBackground src\particles.hlsl >nul || exit /b 1
+rc /nologo %RCDEF% /fo build\app.res src\app.rc || exit /b 1
 
-cl /nologo /O2 /MT /EHsc /std:c++20 /utf-8 /W3 /DUNICODE /D_UNICODE %VERDEF% /Ibuild src\*.cpp /Fobuild\ /Fe:LiteWallpaper.exe ^
+cl /nologo /O2 /MT /EHsc /std:c++20 /utf-8 /W3 /DUNICODE /D_UNICODE %VERDEF% /Ibuild src\*.cpp /Fobuild\ /Fe:LiteWallpaper.exe build\app.res ^
    /link /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /MANIFEST:EMBED /MANIFESTINPUT:src\app.manifest ^
    user32.lib gdi32.lib shell32.lib ole32.lib oleaut32.lib advapi32.lib d3d11.lib dxgi.lib dwmapi.lib wtsapi32.lib ^
    windowscodecs.lib mfplat.lib mfuuid.lib comctl32.lib comdlg32.lib taskschd.lib uxtheme.lib winhttp.lib bcrypt.lib delayimp.lib ^

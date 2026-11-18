@@ -15,6 +15,11 @@ jobs:
         shell: cmd
         run: build.bat
 
+      # Nothing that identifies the build machine or a person (user names, profile paths, .pdb paths).
+      - name: Check binary for personal strings
+        shell: pwsh
+        run: ./scripts/check-binary.ps1 LiteWallpaper.exe
+
       - uses: actions/upload-artifact@v4
         with:
           name: LiteWallpaper-dev

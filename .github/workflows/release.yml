@@ -33,6 +33,11 @@ jobs:
         shell: cmd
         run: build.bat ${{ steps.version.outputs.version }}
 
+      # Nothing that identifies the build machine or a person (user names, profile paths, .pdb paths).
+      - name: Check binary for personal strings
+        shell: pwsh
+        run: ./scripts/check-binary.ps1 LiteWallpaper.exe
+
       # The updater looks for an asset named LiteWallpaper-<version>.zip with LiteWallpaper.exe at its root.
       - name: Package
         shell: pwsh
@@ -42,6 +47,20 @@ jobs:
           Copy-Item LiteWallpaper.exe, README.md stage/
           Copy-Item shaders, particles stage/ -Recurse
           Compress-Archive -Path stage/* -DestinationPath "dist/LiteWallpaper-$v.zip"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup --no-progress -y }
+
+      # LiteWallpaper-<version>-setup.exe: installs per user with Start menu shortcuts and an uninstaller.
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q installer/LiteWallpaper.iss "/DAppVersion=$v" "/DSourceDir=$PWD\stage" "/O$PWD\dist"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ./scripts/check-binary.ps1 "dist/LiteWallpaper-$v-setup.exe"
 
       - name: Publish release
         uses: softprops/action-gh-release@v2

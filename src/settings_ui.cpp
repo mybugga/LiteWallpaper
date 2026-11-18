@@ -1020,7 +1020,7 @@ void ShowSettings() {
         wc.lpszClassName = kClass;
         wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
         wc.hbrBackground = BgBrush();
-        wc.hIcon = AppIcon();
+        wc.hIcon = AppIcon(true);
         wc.hIconSm = AppIcon();
         RegisterClassExW(&wc);
         registered = true;
