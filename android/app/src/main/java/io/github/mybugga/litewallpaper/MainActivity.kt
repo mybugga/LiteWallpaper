@@ -133,6 +133,13 @@ class MainActivity : ComponentActivity() {
             askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         UpdateCheckJob.sync(this)
+        if (intent?.action == Updater.ACTION_INSTALL_STATUS) Updater.onInstallStatus(this, intent)
+    }
+
+    // Android's installer reporting on an update (see Updater.install).
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.action == Updater.ACTION_INSTALL_STATUS) Updater.onInstallStatus(this, intent)
     }
 
     override fun onResume() {
@@ -447,9 +454,9 @@ private fun UpdateBanner() {
                     progress = 0f
                     error = null
                     scope.launch {
-                        runCatching { Updater.download(context, r) { p -> progress = p } }
-                            .onSuccess { Updater.install(context, it); progress = -1f }
-                            .onFailure { error = it.message; progress = -1f }
+                        runCatching { Updater.install(context, Updater.download(context, r) { p -> progress = p }) }
+                            .onFailure { error = it.message }
+                        progress = -1f
                     }
                 }, shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE82828), contentColor = Color.White)) {
                     Text("Update", fontWeight = FontWeight.SemiBold)
