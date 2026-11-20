@@ -28,9 +28,12 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("pauseInBatterySaver", true)
         set(v) = sp.edit { putBoolean("pauseInBatterySaver", v) }
 
-    /** Pan across the picture as you swipe between home screen pages (when the launcher reports them). */
+    /**
+     * Pan across the picture as you swipe between home screen pages (when the launcher reports them).
+     * Off by default: launchers put the first page at the picture's left edge, away from its subject.
+     */
     var followPages: Boolean
-        get() = sp.getBoolean("followPages", true)
+        get() = sp.getBoolean("followPages", false)
         set(v) = sp.edit { putBoolean("followPages", v) }
 
     // Per-wallpaper tweaks, as in the Windows settings window.

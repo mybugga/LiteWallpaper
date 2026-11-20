@@ -61,9 +61,9 @@ The Android app has every bundled wallpaper: all the shaders and all the particl
 - **Frame rate**: 15, 24, 30 (default) or 60 fps.
 - **Resolution**: how many of the screen's pixels it draws (75% by default; phone screens are dense, so it still looks sharp), scaled up smoothly.
 - **Pause in battery saver** (on by default).
-- **Scroll with home screen pages**.
+- **Scroll with home screen pages** (off by default): see below.
 
-**Tall screens**: a phone shows a slice of each wide picture, centred on its subject. If your launcher scrolls the wallpaper, swiping between home screen pages pans across the whole picture.
+**Tall screens**: a phone shows a slice of each wide picture, centred on its subject, on every home screen page. Turn on **Scroll with home screen pages** to pan across the whole picture as you swipe between pages instead (if your launcher scrolls wallpapers); the first page then shows the picture's left edge.
 
 **Battery**: Android tells the wallpaper when it's hidden (an app or game covers it, or the screen is off), and then it draws nothing at all. It also stops while battery saver is on, unless you turn that off.
 

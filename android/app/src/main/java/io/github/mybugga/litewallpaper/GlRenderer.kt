@@ -19,9 +19,10 @@ import java.util.concurrent.TimeUnit
 /**
  * Draws a wallpaper into a Surface on its own thread: the live wallpaper's, or the app's preview.
  * Frames are paced to the frame-rate setting on the display's vsync, drawn at the resolution setting
- * and scaled up; nothing at all is drawn while it's hidden.
+ * and scaled up; nothing at all is drawn while it's hidden. A [miniature] (the app's preview) shows the
+ * whole screen shrunk: particle effects get a full screen's worth of space, drawn smaller.
  */
-class GlRenderer(context: Context, private val tag: String) {
+class GlRenderer(context: Context, private val tag: String, private val miniature: Boolean = false) {
     private val app = context.applicationContext
     private val prefs = Prefs(app)
     private val thread = HandlerThread("LiteWallpaper GL $tag").apply { start() }
@@ -225,7 +226,9 @@ class GlRenderer(context: Context, private val tag: String) {
             GLES30.glClearColor(0f, 0f, 0f, 1f)
             GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
         } else {
-            s.draw(Frame(rw, rh, dt, time, pagePan, pixelDensity * k))
+            val screen = app.resources.displayMetrics.widthPixels
+            val density = if (miniature && screen > 0) pixelDensity * width / screen else pixelDensity
+            s.draw(Frame(rw, rh, dt, time, pagePan, density * k))
         }
         if (scaled) {
             GLES30.glBindFramebuffer(GLES30.GL_READ_FRAMEBUFFER, fbo)

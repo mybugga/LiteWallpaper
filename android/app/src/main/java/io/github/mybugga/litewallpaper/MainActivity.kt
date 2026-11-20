@@ -232,7 +232,7 @@ private fun Hero(wp: Wallpaper, inUse: Boolean, onUse: () -> Unit, onCustomize: 
 @Composable
 private fun LivePreview(wp: Wallpaper, modifier: Modifier) {
     val context = LocalContext.current
-    val renderer = remember { GlRenderer(context, "preview") }
+    val renderer = remember { GlRenderer(context, "preview", miniature = true) }
     DisposableEffect(Unit) { onDispose { renderer.release() } }
     LaunchedEffect(wp.id) { renderer.setWallpaper(wp) }
     val current by rememberUpdatedState(wp)
@@ -324,7 +324,10 @@ private fun Thumbnail(path: String, modifier: Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Customize(wp: Wallpaper, prefs: Prefs) {
-    Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 28.dp)) {
+    Column(
+        Modifier.verticalScroll(rememberScrollState()).windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 24.dp).padding(bottom = 20.dp),
+    ) {
         Text("Customize ${wp.name}", color = TextColor, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         if (wp.kind == Wallpaper.Kind.Shader) {
             var speed by remember(wp.id) { mutableFloatStateOf(prefs.speed(wp.id)) }
