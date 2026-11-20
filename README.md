@@ -69,7 +69,7 @@ The Android app has every bundled wallpaper: all the shaders and all the particl
 
 **Particle effects** react to touch the way they do to the mouse on Windows: hold a finger on the screen for the hover effect and tap for the click effect.
 
-**Updates**: each time you open the app, it asks GitHub for the latest release. When there is a newer one, it shows **LiteWallpaper x.y.z is available** with an **Update** button. That downloads the APK, checks it against the SHA-256 that GitHub publishes for it, and opens Android's installer, which asks you to confirm (the first time, Android also asks you to allow LiteWallpaper to install apps). Releases are all signed with the same key, so updates install over the top and keep your settings. Builds you make yourself are "dev" builds, which never offer updates.
+**Updates**: about once a day while your phone is online (Android picks a moment that suits the battery), and each time you open the app, it asks GitHub for the latest release. When there is a newer one, you get a quiet notification, **LiteWallpaper x.y.z is available**, once per version. Tapping it opens the app, which shows the same message with an **Update** button. That downloads the APK, checks it against the SHA-256 that GitHub publishes for it, and opens Android's installer, which asks you to confirm (the first time, Android also asks you to allow LiteWallpaper to install apps). Releases are all signed with the same key, so updates install over the top and keep your settings. On Android 13 and newer, the app asks once whether it may send notifications; **Tell me when there's an update** in Customize turns the daily check off or on. Builds you make yourself are "dev" builds, which never offer updates.
 
 ## Staying out of the way of games
 

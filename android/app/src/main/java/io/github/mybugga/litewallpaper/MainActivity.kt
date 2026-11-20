@@ -1,13 +1,16 @@
 package io.github.mybugga.litewallpaper
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.SurfaceTexture
+import android.os.Build
 import android.os.Bundle
 import android.util.LruCache
 import android.view.MotionEvent
@@ -15,8 +18,10 @@ import android.view.Surface
 import android.view.TextureView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -109,6 +114,7 @@ private val RedText = Color(0xFFFF5A5A)
 /** The gallery: the selected wallpaper plays large with its details; every wallpaper is a tile below. */
 class MainActivity : ComponentActivity() {
     private var resumed by mutableStateOf(0)
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -118,11 +124,21 @@ class MainActivity : ComponentActivity() {
                 Gallery(resumed)
             }
         }
+        // Update notifications need Android 13+'s permission: asked once, on first launch.
+        val prefs = Prefs(this)
+        if (Build.VERSION.SDK_INT >= 33 && Updater.supported(this) && prefs.updateNotifications && !prefs.askedNotifications &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            prefs.askedNotifications = true
+            askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        UpdateCheckJob.sync(this)
     }
 
     override fun onResume() {
         super.onResume()
         resumed++  // coming back from the system's wallpaper screen: "In use" may have changed
+        UpdateCheckJob.clear(this)
     }
 }
 
@@ -365,6 +381,26 @@ private fun Customize(wp: Wallpaper, prefs: Prefs) {
         SwitchRow("Scroll with home screen pages", pages) { pages = it; prefs.followPages = it }
         Text("Lower frame rate and resolution use less battery. The wallpaper never draws while an app or game covers it.",
             color = Dim, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 10.dp))
+
+        val context = LocalContext.current
+        if (Updater.supported(context)) {
+            HorizontalDivider(Modifier.padding(vertical = 16.dp), color = Color(0x1AFFFFFF))
+            Text("Updates", color = TextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                if (!granted) Toast.makeText(context, "Allow notifications for LiteWallpaper in Android's settings to get them", Toast.LENGTH_LONG).show()
+            }
+            var notify by remember { mutableStateOf(prefs.updateNotifications) }
+            SwitchRow("Tell me when there's an update", notify) {
+                notify = it
+                prefs.updateNotifications = it
+                UpdateCheckJob.sync(context)
+                if (it && Build.VERSION.SDK_INT >= 33 &&
+                    context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                ) ask.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            Text("You have version ${Updater.currentVersion(context)}. It checks for a newer one about once a day, and every time you open the app.",
+                color = Dim, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
+        }
     }
 }
 

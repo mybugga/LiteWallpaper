@@ -36,6 +36,21 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("followPages", false)
         set(v) = sp.edit { putBoolean("followPages", v) }
 
+    /** Check for a newer version about once a day and show a notification (release builds only). */
+    var updateNotifications: Boolean
+        get() = sp.getBoolean("updateNotifications", true)
+        set(v) = sp.edit { putBoolean("updateNotifications", v) }
+
+    /** The last version a notification was shown for, so each is only announced once. */
+    var notifiedVersion: String?
+        get() = sp.getString("notifiedVersion", null)
+        set(v) = sp.edit { putString("notifiedVersion", v) }
+
+    /** Whether Android 13+'s notification permission has been asked for (asked once, never nagged). */
+    var askedNotifications: Boolean
+        get() = sp.getBoolean("askedNotifications", false)
+        set(v) = sp.edit { putBoolean("askedNotifications", v) }
+
     // Per-wallpaper tweaks, as in the Windows settings window.
     fun speed(id: String) = sp.getFloat("speed:$id", 1f)
     fun hue(id: String) = sp.getFloat("hue:$id", 0f)

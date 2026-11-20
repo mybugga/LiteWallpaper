@@ -43,6 +43,8 @@ class LiteWallpaperService : WallpaperService() {
             prefs.sp.registerOnSharedPreferenceChangeListener(this)
             ContextCompat.registerReceiver(this@LiteWallpaperService, saverReceiver,
                 IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+            // The daily update check, for people who set the wallpaper and rarely open the app.
+            if (!isPreview) UpdateCheckJob.sync(this@LiteWallpaperService)
         }
 
         override fun onDestroy() {
