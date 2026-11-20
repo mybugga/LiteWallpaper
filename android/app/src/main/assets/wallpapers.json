@@ -1,0 +1,642 @@
+[
+ {
+  "id": "armillary",
+  "name": "Armillary",
+  "kind": "shader",
+  "file": "shaders/armillary.frag",
+  "textures": [
+   "shaders/assets/armillary.jpg"
+  ],
+  "description": "Steel rings round a glowing core.",
+  "aspect": 1.7778,
+  "focus": 0.757,
+  "scale": 1.0
+ },
+ {
+  "id": "astronaut",
+  "name": "Astronaut",
+  "kind": "shader",
+  "file": "shaders/astronaut.frag",
+  "textures": [
+   "shaders/assets/astronaut.png"
+  ],
+  "description": "A photo of an astronaut on the right, looking out at a slowly turning sky with the Milky Way, thousands of stars and the odd shooting star. The sun glints on the visor and a helmet light blinks.",
+  "aspect": 0.5635,
+  "focus": 0.688,
+  "scale": 1.0
+ },
+ {
+  "id": "astronaut_blackhole",
+  "name": "Astronaut blackhole",
+  "kind": "shader",
+  "file": "shaders/astronaut_blackhole.frag",
+  "textures": [
+   "shaders/assets/astronaut_blackhole.png",
+   "shaders/assets/space_blackhole.jpg"
+  ],
+  "description": "The astronaut faces a black hole, from NASA's visualization of one (NASA Goddard / Jeremy Schnittman, SVS 14619).",
+  "aspect": 1.7778,
+  "focus": 0.817,
+  "scale": 1.0
+ },
+ {
+  "id": "astronaut_galaxy",
+  "name": "Astronaut galaxy",
+  "kind": "shader",
+  "file": "shaders/astronaut_galaxy.frag",
+  "textures": [
+   "shaders/assets/astronaut_galaxy.png",
+   "shaders/assets/space_galaxy.jpg"
+  ],
+  "description": "The astronaut faces the Whirlpool Galaxy, M51, and its small companion (NASA, ESA, S. Beckwith, Hubble Heritage Team), tinted toward the violet in the visor.",
+  "aspect": 1.7778,
+  "focus": 0.81,
+  "scale": 1.0
+ },
+ {
+  "id": "astronaut_nebula",
+  "name": "Astronaut nebula",
+  "kind": "shader",
+  "file": "shaders/astronaut_nebula.frag",
+  "textures": [
+   "shaders/assets/astronaut_nebula.png",
+   "shaders/assets/space_nebula.jpg"
+  ],
+  "description": "The astronaut faces the Pillars of Creation in the Eagle Nebula (NASA, ESA, Hubble Heritage Team, 2014), tinted toward the emerald in the visor.",
+  "aspect": 1.7778,
+  "focus": 0.81,
+  "scale": 1.0
+ },
+ {
+  "id": "astronaut_pulsar",
+  "name": "Astronaut pulsar",
+  "kind": "shader",
+  "file": "shaders/astronaut_pulsar.frag",
+  "textures": [
+   "shaders/assets/astronaut_pulsar.png",
+   "shaders/assets/space_pulsar.jpg"
+  ],
+  "description": "The astronaut faces the Crab Nebula, the wreck of a star that exploded in 1054, with the pulsar it left spinning at its heart (NASA/CXC/SAO, STScI, JPL-Caltech composite).",
+  "aspect": 1.7778,
+  "focus": 0.821,
+  "scale": 1.0
+ },
+ {
+  "id": "aurora",
+  "name": "Aurora",
+  "kind": "shader",
+  "file": "shaders/aurora.frag",
+  "textures": [],
+  "description": "Slow curtains of light over a starry night sky.",
+  "aspect": 1.7778,
+  "focus": 0.5
+ },
+ {
+  "id": "book",
+  "name": "Book",
+  "kind": "shader",
+  "file": "shaders/book.frag",
+  "textures": [
+   "shaders/assets/book.jpg",
+   "shaders/assets/book_fx.png"
+  ],
+  "description": "An old leather book floating open in the dark, golden light pouring out of it.",
+  "aspect": 1.7778,
+  "focus": 0.767,
+  "scale": 1.0
+ },
+ {
+  "id": "bottle",
+  "name": "Bottle",
+  "kind": "shader",
+  "file": "shaders/bottle.frag",
+  "textures": [
+   "shaders/assets/bottle.jpg",
+   "shaders/assets/bottle_light.jpg"
+  ],
+  "description": "A thunderstorm trapped in a corked glass bottle.",
+  "aspect": 1.7778,
+  "focus": 0.707,
+  "scale": 1.0
+ },
+ {
+  "id": "car",
+  "name": "Car",
+  "kind": "shader",
+  "file": "shaders/car.frag",
+  "textures": [
+   "shaders/assets/car.jpg",
+   "shaders/assets/car_fx.png"
+  ],
+  "description": "A black supercar in the rain at night.",
+  "aspect": 1.7778,
+  "focus": 0.62,
+  "scale": 1.0
+ },
+ {
+  "id": "chess",
+  "name": "Chess",
+  "kind": "shader",
+  "file": "shaders/chess.frag",
+  "textures": [
+   "shaders/assets/chess.jpg",
+   "shaders/assets/chess_shards.png"
+  ],
+  "description": "A black marble king split by gold-filled cracks.",
+  "aspect": 1.7778,
+  "focus": 0.719,
+  "scale": 1.0
+ },
+ {
+  "id": "crystals",
+  "name": "Crystals",
+  "kind": "shader",
+  "file": "shaders/crystals.frag",
+  "textures": [
+   "shaders/assets/crystals.jpg",
+   "shaders/assets/crystal_shards.png"
+  ],
+  "description": "A cluster of glowing green and purple crystals on a dark rock.",
+  "aspect": 1.7778,
+  "focus": 0.761,
+  "scale": 1.0
+ },
+ {
+  "id": "door",
+  "name": "Door",
+  "kind": "shader",
+  "file": "shaders/door.frag",
+  "textures": [
+   "shaders/assets/door.jpg",
+   "shaders/assets/door_fx.png"
+  ],
+  "description": "Stone steps climbing through fog to an open door full of golden light.",
+  "aspect": 1.7778,
+  "focus": 0.809,
+  "scale": 1.0
+ },
+ {
+  "id": "dragon",
+  "name": "Dragon",
+  "kind": "shader",
+  "file": "shaders/dragon.frag",
+  "textures": [
+   "shaders/assets/dragon.jpg"
+  ],
+  "description": "A black dragon veined with fire, alive. It looks slowly about, breathes deeply with its chest swelling and smoke puffing from its nostrils, beats its wings and blinks.",
+  "aspect": 1.7778,
+  "focus": 0.69,
+  "scale": 1.0
+ },
+ {
+  "id": "feather",
+  "name": "Feather",
+  "kind": "shader",
+  "file": "shaders/feather.frag",
+  "textures": [
+   "shaders/assets/feather.jpg",
+   "shaders/assets/feather_fx.png"
+  ],
+  "description": "A black feather burning along one edge, drifting in the dark.",
+  "aspect": 1.7778,
+  "focus": 0.808,
+  "scale": 1.0
+ },
+ {
+  "id": "foxmask",
+  "name": "Foxmask",
+  "kind": "shader",
+  "file": "shaders/foxmask.frag",
+  "textures": [
+   "shaders/assets/foxmask.jpg",
+   "shaders/assets/foxmask_fx.png"
+  ],
+  "description": "A white kitsune mask hanging on red cords in drifting smoke.",
+  "aspect": 1.7778,
+  "focus": 0.773,
+  "scale": 1.0
+ },
+ {
+  "id": "ghostship",
+  "name": "Ghostship",
+  "kind": "shader",
+  "file": "shaders/ghostship.frag",
+  "textures": [
+   "shaders/assets/ghostship.jpg",
+   "shaders/assets/ghostship_fx.png"
+  ],
+  "description": "A ragged galleon at night on a dark sea.",
+  "aspect": 1.7778,
+  "focus": 0.736,
+  "scale": 1.0
+ },
+ {
+  "id": "gradient",
+  "name": "Gradient",
+  "kind": "shader",
+  "file": "shaders/gradient.frag",
+  "textures": [],
+  "description": "Four soft color blobs wandering slowly. The cheapest of the bundled shaders.",
+  "aspect": 1.7778,
+  "focus": 0.5
+ },
+ {
+  "id": "guitar",
+  "name": "Guitar",
+  "kind": "shader",
+  "file": "shaders/guitar.frag",
+  "textures": [
+   "shaders/assets/guitar.jpg"
+  ],
+  "description": "A black electric guitar edged in blue light.",
+  "aspect": 1.7778,
+  "focus": 0.754,
+  "scale": 1.0
+ },
+ {
+  "id": "katana",
+  "name": "Katana",
+  "kind": "shader",
+  "file": "shaders/katana.frag",
+  "textures": [
+   "shaders/assets/katana.jpg"
+  ],
+  "description": "A katana hangs in the dark while cherry blossom petals drift down around it, tumbling and swaying, some behind the blade and some in front, near ones soft as if out of focus and lit pink as they pass the blade's glow.",
+  "aspect": 1.7778,
+  "focus": 0.808,
+  "scale": 1.0
+ },
+ {
+  "id": "lighthouse",
+  "name": "Lighthouse",
+  "kind": "shader",
+  "file": "shaders/lighthouse.frag",
+  "textures": [
+   "shaders/assets/lighthouse.jpg"
+  ],
+  "description": "A lighthouse on a rock in a dark sea. Its beam turns round and round: it sweeps out to the left through the haze, flashes as it faces you, sweeps out to the right and passes behind the tower.",
+  "aspect": 1.7778,
+  "focus": 0.791,
+  "scale": 1.0
+ },
+ {
+  "id": "manta",
+  "name": "Manta",
+  "kind": "shader",
+  "file": "shaders/manta.frag",
+  "textures": [
+   "shaders/assets/manta.jpg"
+  ],
+  "description": "A glowing manta gliding through the dark sea.",
+  "aspect": 1.7778,
+  "focus": 0.747,
+  "scale": 1.0
+ },
+ {
+  "id": "mech",
+  "name": "Mech",
+  "kind": "shader",
+  "file": "shaders/mech.frag",
+  "textures": [
+   "shaders/assets/mech.jpg",
+   "shaders/assets/mech_fx.png"
+  ],
+  "description": "A black armoured robot in red smoke. The smoke streams up and away from it, more drifts in around it, the armour's red lights pulse like a heartbeat, a scan of light runs along the visor every few seconds, and embers drift up.",
+  "aspect": 1.7778,
+  "focus": 0.424,
+  "scale": 1.0
+ },
+ {
+  "id": "meteor",
+  "name": "Meteor",
+  "kind": "shader",
+  "file": "shaders/meteor.frag",
+  "textures": [
+   "shaders/assets/meteor.jpg",
+   "shaders/assets/meteor_fx.png"
+  ],
+  "description": "A burning rock floating in the dark, split by cracks of lava.",
+  "aspect": 1.7778,
+  "focus": 0.752,
+  "scale": 1.0
+ },
+ {
+  "id": "planet_cosmic",
+  "name": "Planet cosmic",
+  "kind": "shader",
+  "file": "shaders/planet_cosmic.frag",
+  "textures": [
+   "shaders/assets/planet_cosmic.jpg"
+  ],
+  "description": "A blue and violet world veined with molten orange, its rings streaming violet and blue. A still picture brought to life.",
+  "aspect": 1.7778,
+  "focus": 0.67,
+  "scale": 1.0
+ },
+ {
+  "id": "planet_crystal",
+  "name": "Planet crystal",
+  "kind": "shader",
+  "file": "shaders/planet_crystal.frag",
+  "textures": [
+   "shaders/assets/planet_crystal.jpg"
+  ],
+  "description": "A cracked blue world ringed with tumbling ice crystals. A still picture brought to life.",
+  "aspect": 1.7778,
+  "focus": 0.68,
+  "scale": 1.0
+ },
+ {
+  "id": "planet_eclipse",
+  "name": "Planet eclipse",
+  "kind": "shader",
+  "file": "shaders/planet_eclipse.frag",
+  "textures": [
+   "shaders/assets/planet_eclipse.jpg"
+  ],
+  "description": "A dark world eclipsing its star, the corona flaring gold behind it. A still picture brought to life.",
+  "aspect": 1.7778,
+  "focus": 0.663,
+  "scale": 1.0
+ },
+ {
+  "id": "planet_ember",
+  "name": "Planet ember",
+  "kind": "shader",
+  "file": "shaders/planet_ember.frag",
+  "textures": [
+   "shaders/assets/planet_ember.jpg"
+  ],
+  "description": "A burning world with fiery cracks and blazing orange rings, in drifting embers. A still picture brought to life.",
+  "aspect": 1.7778,
+  "focus": 0.675,
+  "scale": 1.0
+ },
+ {
+  "id": "planet_ice",
+  "name": "Planet ice",
+  "kind": "shader",
+  "file": "shaders/planet_ice.frag",
+  "textures": [
+   "shaders/assets/planet_ice.jpg"
+  ],
+  "description": "An ice world ringed with glittering crystal shards, in teal frost clouds. A still picture brought to life.",
+  "aspect": 1.7778,
+  "focus": 0.641,
+  "scale": 1.0
+ },
+ {
+  "id": "planet_neon",
+  "name": "Planet neon",
+  "kind": "shader",
+  "file": "shaders/planet_neon.frag",
+  "textures": [
+   "shaders/assets/planet_neon.jpg"
+  ],
+  "description": "A violet world in neon magenta and blue rings, wrapped in purple nebula. A still picture brought to life.",
+  "aspect": 1.7778,
+  "focus": 0.683,
+  "scale": 1.0
+ },
+ {
+  "id": "planet_sapphire",
+  "name": "Planet sapphire",
+  "kind": "shader",
+  "file": "shaders/planet_sapphire.frag",
+  "textures": [
+   "shaders/assets/planet_sapphire.jpg"
+  ],
+  "description": "A deep blue world with wide sapphire rings sweeping across the screen. A still picture brought to life.",
+  "aspect": 1.7778,
+  "focus": 0.63,
+  "scale": 1.0
+ },
+ {
+  "id": "planet_storm",
+  "name": "Planet storm",
+  "kind": "shader",
+  "file": "shaders/planet_storm.frag",
+  "textures": [
+   "shaders/assets/planet_storm.jpg"
+  ],
+  "description": "A blue world with a great spiral storm, ringed in electric blue. A still picture brought to life.",
+  "aspect": 1.7778,
+  "focus": 0.648,
+  "scale": 1.0
+ },
+ {
+  "id": "plasma",
+  "name": "Plasma",
+  "kind": "shader",
+  "file": "shaders/plasma.frag",
+  "textures": [],
+  "description": "Smooth, dark, slowly morphing color fields.",
+  "aspect": 1.7778,
+  "focus": 0.5
+ },
+ {
+  "id": "prism",
+  "name": "Prism",
+  "kind": "shader",
+  "file": "shaders/prism.frag",
+  "textures": [
+   "shaders/assets/prism.jpg"
+  ],
+  "description": "A glass prism hanging on a cord splits a white beam into a rainbow.",
+  "aspect": 1.7778,
+  "focus": 0.771,
+  "scale": 1.0
+ },
+ {
+  "id": "projector",
+  "name": "Projector",
+  "kind": "shader",
+  "file": "shaders/projector.frag",
+  "textures": [
+   "shaders/assets/projector.jpg",
+   "shaders/assets/projector_fx.png"
+  ],
+  "description": "An old film projector running in the dark.",
+  "aspect": 1.211,
+  "focus": 0.78,
+  "scale": 1.0
+ },
+ {
+  "id": "raven",
+  "name": "Raven",
+  "kind": "shader",
+  "file": "shaders/raven.frag",
+  "textures": [
+   "shaders/assets/raven.jpg"
+  ],
+  "description": "A clockwork raven perched on a rock.",
+  "aspect": 1.7778,
+  "focus": 0.69,
+  "scale": 1.0
+ },
+ {
+  "id": "ribbon",
+  "name": "Ribbon",
+  "kind": "shader",
+  "file": "shaders/ribbon.frag",
+  "textures": [
+   "shaders/assets/ribbon.jpg",
+   "shaders/assets/ribbon_flow.png"
+  ],
+  "description": "Glossy glass ribbons twisting through the dark, with pink and blue light streaming to the right through them like light through fibre optics.",
+  "aspect": 1.7778,
+  "focus": 0.466,
+  "scale": 1.0
+ },
+ {
+  "id": "sakura_pond",
+  "name": "Sakura pond",
+  "kind": "shader",
+  "file": "shaders/sakura_pond.frag",
+  "textures": [
+   "shaders/assets/sakura_pond.jpg"
+  ],
+  "description": "A glowing cherry tree leans over dark water at night.",
+  "aspect": 1.7778,
+  "focus": 0.738,
+  "scale": 1.0
+ },
+ {
+  "id": "skull",
+  "name": "Skull",
+  "kind": "shader",
+  "file": "shaders/skull.frag",
+  "textures": [
+   "shaders/assets/skull.jpg",
+   "shaders/assets/skull_fx.png"
+  ],
+  "description": "A skull wreathed in smoke, white on one side and lit red on the other.",
+  "aspect": 1.7778,
+  "focus": 0.423,
+  "scale": 1.0
+ },
+ {
+  "id": "snowglobe",
+  "name": "Snowglobe",
+  "kind": "shader",
+  "file": "shaders/snowglobe.frag",
+  "textures": [
+   "shaders/assets/snowglobe.jpg",
+   "shaders/assets/snowglobe_fx.png"
+  ],
+  "description": "A mountain cabin inside a glass globe.",
+  "aspect": 1.7778,
+  "focus": 0.76,
+  "scale": 1.0
+ },
+ {
+  "id": "starfield",
+  "name": "Starfield",
+  "kind": "shader",
+  "file": "shaders/starfield.frag",
+  "textures": [],
+  "description": "Three layers of stars drifting at different speeds, with a faint nebula.",
+  "aspect": 1.7778,
+  "focus": 0.5
+ },
+ {
+  "id": "tree",
+  "name": "Tree",
+  "kind": "shader",
+  "file": "shaders/tree.frag",
+  "textures": [
+   "shaders/assets/tree.jpg"
+  ],
+  "description": "A broad green tree on black.",
+  "aspect": 1.7778,
+  "focus": 0.553,
+  "scale": 1.0
+ },
+ {
+  "id": "watch",
+  "name": "Watch",
+  "kind": "shader",
+  "file": "shaders/watch.frag",
+  "textures": [
+   "shaders/assets/watch.jpg",
+   "shaders/assets/watch_fx.png"
+  ],
+  "description": "An open skeleton pocket watch in warm light.",
+  "aspect": 1.7778,
+  "focus": 0.669,
+  "scale": 1.0
+ },
+ {
+  "id": "waterfall",
+  "name": "Waterfall",
+  "kind": "shader",
+  "file": "shaders/waterfall.frag",
+  "textures": [
+   "shaders/assets/waterfall.jpg",
+   "shaders/assets/waterfall_fx.png"
+  ],
+  "description": "A tiny waterfall in a glass cube.",
+  "aspect": 1.7778,
+  "focus": 0.773,
+  "scale": 1.0
+ },
+ {
+  "id": "waves",
+  "name": "Waves",
+  "kind": "shader",
+  "file": "shaders/waves.frag",
+  "textures": [],
+  "description": "Layered translucent ribbons drifting across a deep gradient.",
+  "aspect": 1.7778,
+  "focus": 0.5
+ },
+ {
+  "id": "bubble",
+  "name": "Bubble",
+  "kind": "particles",
+  "file": "particles/bubble.json",
+  "description": "A particles.js effect, simulated natively. Touch the screen to play with it."
+ },
+ {
+  "id": "default",
+  "name": "Default",
+  "kind": "particles",
+  "file": "particles/default.json",
+  "description": "A particles.js effect, simulated natively. Touch the screen to play with it."
+ },
+ {
+  "id": "nasa",
+  "name": "Nasa",
+  "kind": "particles",
+  "file": "particles/nasa.json",
+  "description": "A particles.js effect, simulated natively. Touch the screen to play with it."
+ },
+ {
+  "id": "nyancat",
+  "name": "Nyancat",
+  "kind": "particles",
+  "file": "particles/nyancat.json",
+  "description": "A particles.js effect, simulated natively. Touch the screen to play with it."
+ },
+ {
+  "id": "nyancat2",
+  "name": "Nyancat2",
+  "kind": "particles",
+  "file": "particles/nyancat2.json",
+  "description": "A particles.js effect, simulated natively. Touch the screen to play with it."
+ },
+ {
+  "id": "snow",
+  "name": "Snow",
+  "kind": "particles",
+  "file": "particles/snow.json",
+  "description": "A particles.js effect, simulated natively. Touch the screen to play with it."
+ },
+ {
+  "id": "star",
+  "name": "Star",
+  "kind": "particles",
+  "file": "particles/star.json",
+  "description": "A particles.js effect, simulated natively. Touch the screen to play with it."
+ }
+]

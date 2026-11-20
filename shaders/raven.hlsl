@@ -4,6 +4,7 @@
 // and dust drifts in the warm glow.
 // texture: assets/raven.jpg
 // scale: 1
+// focus: 0.69
 #include "space.hlsli"
 
 static const float2 kImg = float2(1672.0, 941.0);   // picture pixels the positions below use

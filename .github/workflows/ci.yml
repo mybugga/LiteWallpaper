@@ -24,3 +24,22 @@ jobs:
         with:
           name: LiteWallpaper-dev
           path: LiteWallpaper.exe
+
+  # The Android app as a debug "dev" build (those never offer updates), to catch build breaks.
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon

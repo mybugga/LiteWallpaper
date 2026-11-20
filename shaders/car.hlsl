@@ -5,6 +5,7 @@
 // texture: assets/car.jpg
 // texture1: assets/car_fx.png
 // scale: 1
+// focus: 0.62
 #include "space.hlsli"
 
 static const float2 kImg = float2(1672.0, 941.0);  // picture pixels the positions below use

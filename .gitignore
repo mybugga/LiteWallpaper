@@ -11,3 +11,16 @@ stage/
 *.log
 
 .claude/
+
+# Android build files and this machine's SDK path
+android/.gradle/
+android/.kotlin/
+android/local.properties
+*.apk
+*.aab
+*.idsig
+
+# Signing keys and their passwords: never committed
+.local/
+*.jks
+*.keystore

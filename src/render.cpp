@@ -1,7 +1,8 @@
-// LiteWallpaper.exe --render <wallpaper> <out.bgra> [width height seconds fps]
+// LiteWallpaper.exe --render <wallpaper> <out.bgra> [width height seconds fps cssWidth]
 // Draws a wallpaper offscreen at an exact frame rate, with the same code that draws it on the
 // desktop, and writes the frames one after another as raw BGRA pixels. scripts\make-previews.ps1
-// turns them into the preview GIFs in the README.
+// turns them into the preview GIFs in the README, scripts\make-android-thumbs.py into the phone app's
+// thumbnails. Particles are sized as on a screen cssWidth particles.js pixels wide (default 1920).
 #include "app.h"
 #include <algorithm>
 
@@ -10,7 +11,8 @@ int RenderFrames(int argc, wchar_t** argv) {
     std::wstring file = ResolvePath(argv[2]), out = argv[3];
     UINT w = argc > 4 ? (UINT)_wtoi(argv[4]) : 960, h = argc > 5 ? (UINT)_wtoi(argv[5]) : 540;
     double seconds = argc > 6 ? _wtof(argv[6]) : 5, fps = argc > 7 ? _wtof(argv[7]) : 30;
-    if (!w || !h || seconds <= 0 || fps <= 0) return 1;
+    double cssWidth = argc > 8 ? _wtof(argv[8]) : 1920;
+    if (!w || !h || seconds <= 0 || fps <= 0 || cssWidth <= 0) return 1;
 
     Gpu gpu;
     if (!gpu.Init()) return 2;
@@ -42,7 +44,7 @@ int RenderFrames(int argc, wchar_t** argv) {
     s.bw = w;
     s.bh = h;
     s.cfg.fit = Fit::Cover;
-    s.previewScale = w / 1920.0f;  // particles look as they do on a 1920-wide screen
+    s.previewScale = (float)(w / cssWidth);  // particles look as they do on a screen that wide
 
     HANDLE f = CreateFileW(out.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (f == INVALID_HANDLE_VALUE) return 4;

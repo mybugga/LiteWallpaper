@@ -7,6 +7,7 @@ A small animated wallpaper for Windows 10/11: one exe of about 600 KB, with no r
 - **Shaders** (`.hlsl`), **particles.js effects** (`.json`), **videos** (`.mp4 .mkv .webm .mov .wmv .avi`), **GIFs**, and **images**.
 - Runs on every monitor, and each monitor can have its own wallpaper.
 - Draws behind the desktop icons; icons and clicks behave normally.
+- Also on **Android phones**: every bundled shader and particles.js effect as a live wallpaper (see [Android](#android)).
 
 <p align="center"><img src="docs/gallery.gif" width="720" alt="The wallpaper gallery: the selected wallpaper plays large, every other one is a live tile below"></p>
 
@@ -39,6 +40,8 @@ From the [latest release](https://github.com/mybugga/LiteWallpaper/releases/late
 
 Both update themselves the same way.
 
+For an Android phone, get **`LiteWallpaper-<version>.apk`** (see [Android](#android)).
+
 ## Updates
 
 LiteWallpaper keeps itself up to date from this repository's releases. About a minute and a half after it starts, and then every 6 hours, it asks GitHub for the latest release. When there is a newer one, it downloads it in the background and checks the download against the SHA-256 that GitHub publishes for it. It then replaces its own files and restarts, which takes about a second. It never does this while a game or other fullscreen app is running, or while the settings window is open; it waits for the next quiet moment. Your settings and profiles live in `%APPDATA%\LiteWallpaper`, so updates never touch them.
@@ -47,6 +50,26 @@ LiteWallpaper keeps itself up to date from this repository's releases. About a m
 - **Update automatically** (Settings, General) turns off the background checks. You can still update from the tray menu.
 - If the app is somewhere only admins can write, such as `C:\Program Files\LiteWallpaper` (used by **Start for all users**), you get a notification instead. Choose **Install update** in the tray menu to install it, which asks for admin rights once.
 - Builds you make yourself with plain `build.bat` are "dev" builds, which never update themselves.
+
+## Android
+
+The Android app has every bundled wallpaper: all the shaders and all the particles.js effects, drawn with OpenGL ES 3.0. It needs Android 8.0 or newer.
+
+**Install**: open the [latest release](https://github.com/mybugga/LiteWallpaper/releases/latest) on your phone and download `LiteWallpaper-<version>.apk`. Open it, and when Android asks, allow your browser to install apps. Then open LiteWallpaper, pick a wallpaper and tap **Set as wallpaper**. Android shows a preview; choose **Set wallpaper** for the home screen, or the home and lock screens.
+
+**The app** is a gallery like the one on Windows: the selected wallpaper plays live at the top with its description, and every wallpaper is a tile below. **Customize** changes the selected wallpaper's speed, hue, saturation and brightness, plus settings for all wallpapers:
+- **Frame rate**: 15, 24, 30 (default) or 60 fps.
+- **Resolution**: how many of the screen's pixels it draws (75% by default; phone screens are dense, so it still looks sharp), scaled up smoothly.
+- **Pause in battery saver** (on by default).
+- **Scroll with home screen pages**.
+
+**Tall screens**: a phone shows a slice of each wide picture, centred on its subject. If your launcher scrolls the wallpaper, swiping between home screen pages pans across the whole picture.
+
+**Battery**: Android tells the wallpaper when it's hidden (an app or game covers it, or the screen is off), and then it draws nothing at all. It also stops while battery saver is on, unless you turn that off.
+
+**Particle effects** react to touch the way they do to the mouse on Windows: hold a finger on the screen for the hover effect and tap for the click effect.
+
+**Updates**: each time you open the app, it asks GitHub for the latest release. When there is a newer one, it shows **LiteWallpaper x.y.z is available** with an **Update** button. That downloads the APK, checks it against the SHA-256 that GitHub publishes for it, and opens Android's installer, which asks you to confirm (the first time, Android also asks you to allow LiteWallpaper to install apps). Releases are all signed with the same key, so updates install over the top and keep your settings. Builds you make yourself are "dev" builds, which never offer updates.
 
 ## Staying out of the way of games
 
@@ -149,7 +172,7 @@ The mouse is read by polling the cursor once per frame, with no global mouse hoo
 
 Write a function `float4 mainImage(float2 fragCoord)` in HLSL. You get `iResolution` (pixels), `iTime` (seconds), and `iFrame`. `fragCoord` starts at the bottom-left, like Shadertoy. `vec2/3/4`, `mix`, `fract`, and `mod` also work, which makes porting simple Shadertoy shaders easier. If a shader fails to compile, the tray shows the error and a built-in fallback plays instead.
 
-A shader can also use images: a line `// texture: assets/photo.png` (relative to the shader) binds it as `iChannel0`, and `// texture1:` binds a second one as `iChannel1`; sample with `iChannel0.Sample(iSampler, uv)`. Shaders can `#include` files next to them. Transparent PNGs come in with premultiplied alpha; animated GIFs play. A line `// scale: 1` sets that shader's render resolution, overriding the general setting, which a photo needs to stay sharp.
+A shader can also use images: a line `// texture: assets/photo.png` (relative to the shader) binds it as `iChannel0`, and `// texture1:` binds a second one as `iChannel1`; sample with `iChannel0.Sample(iSampler, uv)`. Shaders can `#include` files next to them. Transparent PNGs come in with premultiplied alpha; animated GIFs play. A line `// scale: 1` sets that shader's render resolution, overriding the general setting, which a photo needs to stay sharp. On phones, which show a slice of the picture, `// focus: 0.69` says where across it (0 to 1) the slice is centred; without it, the slice is centred on the brightest part of the first image.
 
 Bundled astronaut wallpapers (a photo of an astronaut on the right, real space photography behind, with slow camera drift, stars drifting past, shooting stars and suit lights):
 - `astronaut`: the Milky Way and a sun glint on the visor (all procedural).
@@ -168,11 +191,13 @@ The NASA/ESA images are public domain; the astronaut photos are your own images.
 
 `build.bat` needs Visual Studio 2022 or newer with "Desktop development with C++". It finds the compiler itself. `build.bat 1.2.3` stamps a version into the exe; without one you get a "dev" build.
 
+The Android app is a Gradle project in `android\` (JDK 17 and the Android SDK 36): run `gradlew assembleDebug` there. Its shaders are made from the Windows ones by `scripts\convert-for-android.py`, which compiles each `.hlsl` to SPIR-V with glslang and turns that into GLSL ES with SPIRV-Cross, in `android\app\src\main\assets`. `scripts\make-android-thumbs.py` draws the gallery thumbnails with `LiteWallpaper.exe --render`. Run both after changing or adding a wallpaper. The pictures and particle presets are not copied: the build takes them from `shaders\assets` and `particles\`.
+
 The animated previews above come from the wallpapers themselves: `scripts\make-previews.ps1` (needs ffmpeg) runs `LiteWallpaper.exe --render <wallpaper> <out.bgra> <width> <height> <seconds> <fps>` for each one, which draws it offscreen at an exact frame rate, and turns the frames into looping GIFs in `docs\previews`. Pass `-Names` to remake only some.
 
 ## Releasing
 
-Push a tag such as `v1.2.3`. The `Release` workflow builds the exe with that version, zips it with `shaders\` and `particles\` as `LiteWallpaper-1.2.3.zip`, builds the installer `LiteWallpaper-1.2.3-setup.exe` from the same files (`installer\LiteWallpaper.iss`, Inno Setup 6), and publishes a GitHub release with both. Every installed copy then picks it up through the updater. Releases are only ever built on GitHub, and both workflows run `scripts/check-binary.ps1`, which fails the build if the exe contains a user name, computer name, user-profile path or debug-symbols path. You can also start the workflow by hand from the Actions tab and type the version in.
+Push a tag such as `v1.2.3`. The `Release` workflow builds the exe with that version, zips it with `shaders\` and `particles\` as `LiteWallpaper-1.2.3.zip`, builds the installer `LiteWallpaper-1.2.3-setup.exe` from the same files (`installer\LiteWallpaper.iss`, Inno Setup 6), builds the Android app as `LiteWallpaper-1.2.3.apk`, signed with the release key kept in the repository's Actions secrets (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`), and publishes a GitHub release with all three. Every installed copy then picks it up through the updater. Releases are only ever built on GitHub, and both workflows run `scripts/check-binary.ps1`, which fails the build if the exe (or anything in the APK) contains a user name, computer name, user-profile path or debug-symbols path. You can also start the workflow by hand from the Actions tab and type the version in.
 
 ## How it works
 

@@ -1,7 +1,7 @@
 name: Release
 
-# Push a tag like v1.2.3 to build LiteWallpaper and publish it as a GitHub release.
-# Running copies pick the new release up through their built-in updater.
+# Push a tag like v1.2.3 to build LiteWallpaper for Windows and Android and publish both as a GitHub
+# release. Running copies pick the new release up through their built-in updaters.
 on:
   push:
     tags: ['v*']
@@ -15,7 +15,70 @@ permissions:
   contents: write
 
 jobs:
+  # LiteWallpaper-<version>.apk for Android phones, signed with the release key from the repo's secrets.
+  # The phone app looks for an asset with that name to update itself.
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version
+        id: version
+        env:
+          REF: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        run: |
+          v="${REF#v}"
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 1.2.3, got '$v'"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          [ -n "$ANDROID_KEYSTORE_BASE64" ] || { echo "The ANDROID_KEYSTORE_* secrets are missing"; exit 1; }
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
+          chmod +x gradlew
+          ./gradlew assembleRelease -PversionName=${{ steps.version.outputs.version }} --no-daemon
+          rm "$RUNNER_TEMP/release.jks"
+          mkdir -p ../dist
+          cp app/build/outputs/apk/release/app-release.apk ../dist/LiteWallpaper-${{ steps.version.outputs.version }}.apk
+
+      # Updates only install over a copy signed with the same key, so never publish a debug-signed one.
+      - name: Check signature
+        run: |
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          "$apksigner" verify --print-certs dist/*.apk | tee signature.txt
+          grep -q "CN=LiteWallpaper" signature.txt
+
+      # Nothing that identifies the build machine or a person. Pictures are skipped: compressed image
+      # data can contain short patterns like ".pdb" by chance.
+      - name: Check APK for personal strings
+        run: |
+          set -o pipefail
+          unzip -q dist/*.apk -d apk-check
+          echo "Checking $(find apk-check -type f ! -name '*.jpg' ! -name '*.png' ! -name '*.webp' | wc -l) files"
+          find apk-check -type f ! -name '*.jpg' ! -name '*.png' ! -name '*.webp' -print0 |
+            xargs -0 pwsh -NoProfile -File scripts/check-binary.ps1 | { grep -v " is clean$" || true; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: dist/*.apk
+
   release:
+    needs: android
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,6 +124,11 @@ jobs:
           $v = '${{ steps.version.outputs.version }}'
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q installer/LiteWallpaper.iss "/DAppVersion=$v" "/DSourceDir=$PWD\stage" "/O$PWD\dist"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: dist
 
       - name: Publish release
         uses: softprops/action-gh-release@v2

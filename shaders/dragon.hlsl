@@ -8,6 +8,7 @@
 // streams from its jaws between blasts, smoke rolls round its feet and embers rise.
 // texture: assets/dragon.jpg
 // scale: 1
+// focus: 0.69
 #include "space.hlsli"
 
 static const float2 kImg = float2(1672.0, 941.0);    // picture pixels the positions below use

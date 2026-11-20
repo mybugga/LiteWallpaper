@@ -5,6 +5,7 @@
 // texture: assets/projector.jpg
 // texture1: assets/projector_fx.png
 // scale: 1
+// focus: 0.78
 #include "space.hlsli"
 
 static const float2 kImg = float2(1672.0, 941.0);  // picture pixels the positions below use

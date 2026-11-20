@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LiteWallpaper</string>
+    <string name="wallpaper_description">Animated wallpapers: dragons, skulls, planets, particles and more. Only draws while your home screen shows.</string>
+</resources>

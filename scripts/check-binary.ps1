@@ -4,7 +4,7 @@
 param([Parameter(Mandatory, ValueFromRemainingArguments)] [string[]] $Files)
 $ErrorActionPreference = 'Stop'
 
-$patterns = @('\Users\', '/Users/', '.pdb', 'D:\a\', 'runneradmin', 'AppData\Local\Temp')
+$patterns = @('\Users\', '/Users/', '/home/', '.pdb', 'D:\a\', 'runneradmin', 'AppData\Local\Temp')
 foreach ($name in $env:USERNAME, $env:COMPUTERNAME) {
     if ($name -and $name.Length -ge 3 -and $name -notmatch '^(runner|runneradmin|user|admin|administrator)$') { $patterns += $name }
 }
