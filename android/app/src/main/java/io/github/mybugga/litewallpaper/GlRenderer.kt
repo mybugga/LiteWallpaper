@@ -10,6 +10,7 @@ import android.opengl.EGLSurface
 import android.opengl.GLES30
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.util.Log
 import android.view.Choreographer
 import android.view.Surface
@@ -19,14 +20,18 @@ import java.util.concurrent.TimeUnit
 /**
  * Draws a wallpaper into a Surface on its own thread: the live wallpaper's, or the app's preview.
  * Frames are paced to the frame-rate setting on the display's vsync, drawn at the resolution setting
- * and scaled up; nothing at all is drawn while it's hidden. A [miniature] (the app's preview) shows the
- * whole screen shrunk: particle effects get a full screen's worth of space, drawn smaller.
+ * and scaled up; nothing at all is drawn while it's hidden.
  */
-class GlRenderer(context: Context, private val tag: String, private val miniature: Boolean = false) {
+class GlRenderer(context: Context, private val tag: String) {
     private val app = context.applicationContext
     private val prefs = Prefs(app)
     private val thread = HandlerThread("LiteWallpaper GL $tag").apply { start() }
     private val handler = Handler(thread.looper)
+    private val main = Handler(Looper.getMainLooper())
+
+    /** Called on the main thread with a wallpaper's id once its first frame is on the surface. */
+    @Volatile var onFirstFrame: ((String) -> Unit)? = null
+    private var firstFramePending = false
 
     // Everything below is only touched on the GL thread.
     private var display: EGLDisplay = EGL14.EGL_NO_DISPLAY
@@ -89,6 +94,7 @@ class GlRenderer(context: Context, private val tag: String, private val miniatur
         releaseScene()
         time = 0.0
         lastDraw = 0
+        firstFramePending = true
         schedule()
     }
 
@@ -226,9 +232,7 @@ class GlRenderer(context: Context, private val tag: String, private val miniatur
             GLES30.glClearColor(0f, 0f, 0f, 1f)
             GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
         } else {
-            val screen = app.resources.displayMetrics.widthPixels
-            val density = if (miniature && screen > 0) pixelDensity * width / screen else pixelDensity
-            s.draw(Frame(rw, rh, dt, time, pagePan, density * k))
+            s.draw(Frame(rw, rh, dt, time, pagePan, pixelDensity * k))
         }
         if (scaled) {
             GLES30.glBindFramebuffer(GLES30.GL_READ_FRAMEBUFFER, fbo)
@@ -239,6 +243,10 @@ class GlRenderer(context: Context, private val tag: String, private val miniatur
             val err = EGL14.eglGetError()
             if (err == EGL14.EGL_BAD_SURFACE || err == EGL14.EGL_BAD_NATIVE_WINDOW) destroyWindowSurface()
             else if (err == EGL14.EGL_CONTEXT_LOST) contextLost()
+        } else if (firstFramePending && s != null) {
+            firstFramePending = false
+            val id = wp.id
+            main.post { onFirstFrame?.invoke(id) }
         }
     }
 
