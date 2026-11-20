@@ -55,7 +55,7 @@ LiteWallpaper keeps itself up to date from this repository's releases. About a m
 
 The Android app has every bundled wallpaper: all the shaders and all the particles.js effects, drawn with OpenGL ES 3.0. It needs Android 8.0 or newer.
 
-**Install**: open the [latest release](https://github.com/mybugga/LiteWallpaper/releases/latest) on your phone and download `LiteWallpaper-<version>.apk`. Open it, and when Android asks, allow your browser to install apps. Then open LiteWallpaper, pick a wallpaper and tap **Set as wallpaper**. Android shows a preview; choose **Set wallpaper** for the home screen, or the home and lock screens.
+**Install**: open the [latest release](https://github.com/mybugga/LiteWallpaper/releases/latest) on your phone and download `LiteWallpaper-<version>.apk`. Open it, and when Android asks, allow your browser to install apps. Google Play Protect may say it hasn't seen the app before and suggest a scan, as it does for most apps from outside the Play Store: choose **Scan app**, or **More details** and **Install without scanning**. Then open LiteWallpaper, pick a wallpaper and tap **Set as wallpaper**. Android shows a preview; choose **Set wallpaper** for the home screen, or the home and lock screens.
 
 **The app** is a gallery like the one on Windows: the selected wallpaper plays live at the top with its description, and every wallpaper is a tile below. **Customize** changes the selected wallpaper's speed, hue, saturation and brightness, plus settings for all wallpapers:
 - **Frame rate**: 15, 24, 30 (default) or 60 fps.

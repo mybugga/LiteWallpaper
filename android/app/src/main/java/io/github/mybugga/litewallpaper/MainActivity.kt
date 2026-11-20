@@ -415,7 +415,9 @@ private fun UpdateBanner() {
                             .onSuccess { Updater.install(context, it); progress = -1f }
                             .onFailure { error = it.message; progress = -1f }
                     }
-                }, shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE82828))) { Text("Update") }
+                }, shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE82828), contentColor = Color.White)) {
+                    Text("Update", fontWeight = FontWeight.SemiBold)
+                }
             }
         }
         if (progress >= 0f) LinearProgressIndicator(progress = { progress }, color = Red, modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
