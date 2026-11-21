@@ -9,9 +9,11 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.SurfaceTexture
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Bundle
 import android.util.LruCache
+import android.view.Display
 import android.view.Surface
 import android.view.TextureView
 import android.widget.Toast
@@ -117,6 +119,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val Sheet = Color(0xFF16161A)
 private val TextColor = Color(0xFFF2F2F4)
@@ -432,6 +435,30 @@ private fun WallpaperTweaks(wp: Wallpaper, prefs: Prefs) = SheetColumn {
         Text("Particle effects follow their particles.js settings. Touch the screen to play with them, here and on your home screen.",
             color = Body, fontSize = 13.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 8.dp))
     }
+    RainbowControls(wp, prefs)
+}
+
+/** RGB rainbow colors for this wallpaper: off, cycle (every color together) or wave (sweeping across). */
+@Composable
+private fun RainbowControls(wp: Wallpaper, prefs: Prefs) {
+    HorizontalDivider(Modifier.padding(vertical = 14.dp), color = Color(0x1AFFFFFF))
+    Text("Rainbow colors", color = TextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    var mode by remember(wp.id) { mutableIntStateOf(prefs.rainbow(wp.id)) }
+    var speed by remember(wp.id) { mutableFloatStateOf(prefs.rainbowSpeed(wp.id)) }
+    val modes = listOf("Off", "Cycle", "Wave")
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+        modes.forEachIndexed { i, label ->
+            SegmentedButton(selected = mode == i, onClick = { mode = i; prefs.setRainbow(wp.id, i) },
+                shape = SegmentedButtonDefaults.itemShape(i, modes.size),
+                colors = SegmentedButtonDefaults.colors(activeContainerColor = Red.copy(alpha = 0.25f), activeContentColor = TextColor,
+                    inactiveContainerColor = Color.Transparent, inactiveContentColor = Body)) { Text(label, fontSize = 12.sp) }
+        }
+    }
+    Text(if (mode == 2) "A rainbow sweeps across the wallpaper." else "Every color changes together, round the rainbow.",
+        color = Dim, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+    if (mode != 0) {
+        SliderRow("Rainbow speed", "${(speed * 100).toInt()}%", speed, 0.1f..3f) { speed = it; prefs.setTweak("rainbowSpeed", wp.id, it) }
+    }
 }
 
 /** Settings for every wallpaper, and updates. */
@@ -439,14 +466,21 @@ private fun WallpaperTweaks(wp: Wallpaper, prefs: Prefs) = SheetColumn {
 private fun AppSettings(prefs: Prefs) = SheetColumn {
     Text("Settings", color = TextColor, fontSize = 20.sp, fontWeight = FontWeight.Bold)
     var fps by remember { mutableStateOf(prefs.fps) }
-    Text("Frame rate", color = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
-    val rates = listOf(15, 24, 30, 60)
+    Text("Frame rate (fps)", color = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
+    // 15/30/60, plus whatever faster refresh rates this phone's screen has (90, 120, 144 Hz...).
+    val context = LocalContext.current
+    val rates = remember {
+        val screen = runCatching {
+            context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY).supportedModes.map { it.refreshRate.roundToInt() }
+        }.getOrDefault(emptyList())
+        (listOf(15, 30, 60) + screen.filter { it > 60 } + prefs.fps).distinct().sorted()
+    }
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         rates.forEachIndexed { i, r ->
             SegmentedButton(selected = fps == r, onClick = { fps = r; prefs.fps = r },
                 shape = SegmentedButtonDefaults.itemShape(i, rates.size),
                 colors = SegmentedButtonDefaults.colors(activeContainerColor = Red.copy(alpha = 0.25f), activeContentColor = TextColor,
-                    inactiveContainerColor = Color.Transparent, inactiveContentColor = Body)) { Text("$r fps", fontSize = 12.sp) }
+                    inactiveContainerColor = Color.Transparent, inactiveContentColor = Body)) { Text("$r", fontSize = 12.sp) }
         }
     }
     var resolution by remember { mutableFloatStateOf(prefs.resolution) }
@@ -455,10 +489,10 @@ private fun AppSettings(prefs: Prefs) = SheetColumn {
     SwitchRow("Pause in battery saver", saver) { saver = it; prefs.pauseInBatterySaver = it }
     var pages by remember { mutableStateOf(prefs.followPages) }
     SwitchRow("Scroll with home screen pages", pages) { pages = it; prefs.followPages = it }
-    Text("Lower frame rate and resolution use less battery. The wallpaper never draws while an app or game covers it.",
+    Text("Lower frame rate and resolution use less battery. Above 60 fps the screen runs at that rate while the wallpaper shows. " +
+        "The wallpaper never draws while an app or game covers it.",
         color = Dim, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 10.dp))
 
-    val context = LocalContext.current
     if (Updater.supported(context)) {
         HorizontalDivider(Modifier.padding(vertical = 16.dp), color = Color(0x1AFFFFFF))
         Text("Updates", color = TextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)

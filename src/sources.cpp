@@ -13,7 +13,7 @@
 
 // Wrapped around every user shader. Users write: float4 mainImage(float2 fragCoord)
 static const char kShaderHeader[] = R"(
-cbuffer Globals : register(b0) { float2 iResolution; float iTime; float iFrame; float4 _uvXform; float4 _adjust; };
+cbuffer Globals : register(b0) { float2 iResolution; float iTime; float iFrame; float4 _uvXform; float4 _adjust; float4 _rainbow; };
 Texture2D iChannel0 : register(t0);  // images named by "// texture:" and "// texture1:" lines, if any
 Texture2D iChannel1 : register(t1);
 SamplerState iSampler : register(s0);
@@ -42,9 +42,24 @@ float3 _Adjust(float3 c) {
     return saturate(lerp(l.xxx, c, _adjust.y) * _adjust.z);
 }
 
+// Settings window RGB rainbow: _rainbow = (hue angle, wave across the screen, on). Same as Rainbow()
+// in rainbow.hlsli.
+float3 _Rainbow(float3 c, float2 fragCoord) {
+    if (_rainbow.z == 0) return c;
+    float a = _rainbow.x + _rainbow.y * fragCoord.x / iResolution.x;
+    const float3 k = float3(0.57735, 0.57735, 0.57735);
+    float ca = cos(a);
+    float3 r = c * ca + cross(k, c) * sin(a) + k * dot(k, c) * (1 - ca);
+    // Turning hues leaves greys and whites as they are, so those take on the rainbow's color too.
+    float hi = max(c.r, max(c.g, c.b)), lo = min(c.r, min(c.g, c.b));
+    float grey = hi > 0 ? 1 - (hi - lo) / hi : 1;
+    float3 tint = (0.5 + 0.5 * cos(a + float3(0, 2.0944, 4.1888))) * dot(c, float3(0.2126, 0.7152, 0.0722)) * 2;
+    return lerp(r, tint, grey * 0.65);
+}
+
 float4 PSMain(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target {
     float2 fragCoord = float2(pos.x, iResolution.y - pos.y);  // origin bottom-left, like Shadertoy
-    return float4(_Adjust(saturate(mainImage(fragCoord).rgb)), 1.0);
+    return float4(_Adjust(_Rainbow(saturate(mainImage(fragCoord).rgb), fragCoord)), 1.0);
 }
 )";
 
@@ -66,7 +81,46 @@ using PFN_D3DCompile = HRESULT(WINAPI*)(LPCVOID, SIZE_T, LPCSTR, const D3D_SHADE
 
 struct ShaderAdjust {
     float speed = 1, hue = 0, saturation = 1, brightness = 1;
+    Rainbow rainbow;
 };
+
+Rainbow Rainbow::For(const std::wstring& wallpaperPath) {
+    std::wstring section = OverrideSection(wallpaperPath);
+    wchar_t buf[32];
+    GetPrivateProfileStringW(section.c_str(), L"rainbow", L"0", buf, ARRAYSIZE(buf), ConfigPath().c_str());
+    Rainbow r;
+    r.mode = std::clamp(_wtoi(buf + (buf[0] == L'"')), 0, 2);  // the settings window writes "1" with quotes
+    r.speed = std::clamp(IniFloat(section, L"rainbow_speed", 1), 0.0f, 10.0f);
+    return r;
+}
+
+void Rainbow::Fill(double seconds, float out[4]) const {
+    if (!mode) {
+        out[0] = out[1] = out[2] = out[3] = 0;
+        return;
+    }
+    double turns = seconds * speed / 6.0;
+    out[0] = (float)((turns - floor(turns)) * 6.283185307);
+    out[1] = mode == 2 ? 6.2831853f : 0;
+    out[2] = 1;
+    out[3] = 0;
+}
+
+void Rainbow::Apply(const float rb[4], float c[3]) {
+    if (rb[2] == 0) return;
+    float a = rb[0] + rb[1] * 0.5f, ca = cosf(a), sa = sinf(a);
+    const float k = 0.57735f;
+    float kc = k * (c[0] + c[1] + c[2]);  // dot(k, c)
+    float cross[3] = {k * (c[2] - c[1]), k * (c[0] - c[2]), k * (c[1] - c[0])};
+    float r[3], hi = std::max({c[0], c[1], c[2]}), lo = std::min({c[0], c[1], c[2]});
+    float grey = hi > 0 ? 1 - (hi - lo) / hi : 1;
+    float luma = 0.2126f * c[0] + 0.7152f * c[1] + 0.0722f * c[2];
+    for (int i = 0; i < 3; i++) {
+        r[i] = c[i] * ca + cross[i] * sa + k * kc * (1 - ca);
+        float tint = (0.5f + 0.5f * cosf(a + 2.0944f * i)) * luma * 2;
+        c[i] = std::clamp(r[i] + (tint - r[i]) * grey * 0.65f, 0.0f, 1.0f);
+    }
+}
 
 static bool ReadFileBytes(const std::wstring& path, std::string& out);
 
@@ -201,6 +255,7 @@ public:
     void Draw(Gpu& gpu, Screen& s) override {
         FrameConstants c{(float)s.bw, (float)s.bh, (float)time_, frame_, 1, 1, 0, 0,
                          {adjust_.hue * 3.14159265f / 180, adjust_.saturation, adjust_.brightness, 0}};
+        adjust_.rainbow.Fill(lastAnim_, c.rainbow);
         gpu.SetConstants(c);
         ID3D11ShaderResourceView* extra = hasTexture_[1] ? pic_[1].Srv(gpu) : nullptr;
         gpu.ctx->PSSetShaderResources(1, 1, &extra);  // DrawFullscreen binds slot 0
@@ -454,23 +509,43 @@ bool Picture::Load(Gpu& gpu, const std::wstring& path, std::wstring& err) {
 
 class ImageSource final : public Source {
 public:
-    bool Load(Gpu& gpu, const std::wstring& path, std::wstring& err) { return pic_.Load(gpu, path, err); }
-    double NextDue() const override { return pic_.NextDue(); }
-    void SetActive(bool active, double now) override {
-        if (active) pic_.Restart(now);
+    bool Load(Gpu& gpu, const std::wstring& path, const Config& cfg, std::wstring& err) {
+        rainbow_ = Rainbow::For(path);
+        interval_ = 1.0 / cfg.fps;
+        return pic_.Load(gpu, path, err);
     }
-    bool Update(double now, double) override { return pic_.Advance(now); }
+    // A still picture draws once; with the rainbow on it redraws at the frame rate.
+    double NextDue() const override { return rainbow_.On() ? std::min(pic_.NextDue(), next_) : pic_.NextDue(); }
+    void SetActive(bool active, double now) override {
+        if (active) {
+            pic_.Restart(now);
+            next_ = now;
+        }
+    }
+    bool Update(double now, double) override {
+        bool changed = pic_.Advance(now);
+        now_ = now;
+        if (rainbow_.On() && now >= next_) {
+            next_ += interval_;
+            if (next_ < now) next_ = now + interval_;
+            changed = true;
+        }
+        return changed;
+    }
 
     void Draw(Gpu& gpu, Screen& s) override {
         ID3D11ShaderResourceView* srv = pic_.Srv(gpu);
         FrameConstants c{(float)s.bw, (float)s.bh, 0, 0};
         FitTransform(s.cfg.fit, (float)pic_.Width(), (float)pic_.Height(), (float)s.bw, (float)s.bh, &c.uvScaleX);
+        rainbow_.Fill(now_, c.rainbow);
         gpu.SetConstants(c);
         gpu.DrawFullscreen(s, gpu.psTex.Get(), srv);
     }
 
 private:
     Picture pic_;
+    Rainbow rainbow_;
+    double interval_ = 1.0 / 30, next_ = 0, now_ = 0;
 };
 
 // ============================================================================================
@@ -676,6 +751,7 @@ std::unique_ptr<Source> CreateSource(Gpu& gpu, const std::wstring& path, const C
         adjust.hue = IniFloat(section, L"hue", 0);
         adjust.saturation = std::max(0.0f, IniFloat(section, L"saturation", 1));
         adjust.brightness = std::max(0.0f, IniFloat(section, L"brightness", 1));
+        adjust.rainbow = Rainbow::For(path);
         auto s = std::make_unique<ShaderSource>(adjust);
         if (!s->Compile(gpu, code, Narrow(path), path, cfg, error)) return nullptr;
         const char* texOptions[] = {"texture", "texture1"};
@@ -700,7 +776,7 @@ std::unique_ptr<Source> CreateSource(Gpu& gpu, const std::wstring& path, const C
     }
 
     auto s = std::make_unique<ImageSource>();
-    if (!s->Load(gpu, path, error)) return nullptr;
+    if (!s->Load(gpu, path, cfg, error)) return nullptr;
     return s;
 }
 

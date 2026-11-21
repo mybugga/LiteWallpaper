@@ -242,8 +242,11 @@ private class Sim(val bw: Int, val bh: Int, val s: Settings, val drawScale: Floa
     }
 }
 
-class ParticleScene(private val context: Context, wallpaper: Wallpaper) : Scene {
+class ParticleScene(private val context: Context, private val wallpaper: Wallpaper) : Scene {
     private val cfg = Settings()
+    private val prefs = Prefs(context)
+    private val rainbow = FloatArray(4)
+    private val bgRgb = FloatArray(3)
     private val bg: Picture?
     private val image: Picture?
     private var sim: Sim? = null
@@ -712,7 +715,16 @@ class ParticleScene(private val context: Context, wallpaper: Wallpaper) : Scene 
 
     private fun render(sim: Sim, frame: Frame) {
         val c = sim.s
-        GLES30.glClearColor(c.bgColor.r, c.bgColor.g, c.bgColor.b, 1f)
+        // RGB rainbow: the background color joins in too (worked out here), the rest in the shaders.
+        Rainbow.at(prefs.rainbow(wallpaper.id), prefs.rainbowSpeed(wallpaper.id), now, rainbow)
+        bgRgb[0] = c.bgColor.r; bgRgb[1] = c.bgColor.g; bgRgb[2] = c.bgColor.b
+        Rainbow.apply(rainbow, bgRgb)
+        val wavePerPixel = rainbow[1] / frame.width.coerceAtLeast(1)
+        for (program in intArrayOf(bgProgram, lineProgram, partProgram)) {
+            GLES30.glUseProgram(program)
+            GLES30.glUniform4f(GLES30.glGetUniformLocation(program, "uRainbow"), rainbow[0], wavePerPixel, rainbow[2], 0f)
+        }
+        GLES30.glClearColor(bgRgb[0], bgRgb[1], bgRgb[2], 1f)
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
         GLES30.glEnable(GLES30.GL_BLEND)
         GLES30.glBlendFunc(GLES30.GL_ONE, GLES30.GL_ONE_MINUS_SRC_ALPHA)  // premultiplied alpha
@@ -869,6 +881,18 @@ flat in vec4 vShape;
 flat in vec4 vParam;
 uniform sampler2D tex0;
 out vec4 fragColor;
+uniform vec4 uRainbow;  // RGB rainbow: hue angle, wave (radians per pixel across), on
+vec3 rainbow(vec3 c) {
+    if (uRainbow.z == 0.0) return c;
+    float a = uRainbow.x + uRainbow.y * gl_FragCoord.x;
+    const vec3 k = vec3(0.57735);
+    float ca = cos(a);
+    vec3 r = c * ca + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - ca);
+    float hi = max(c.r, max(c.g, c.b)), lo = min(c.r, min(c.g, c.b));
+    float grey = hi > 0.0 ? 1.0 - (hi - lo) / hi : 1.0;  // greys and whites take on the rainbow too
+    vec3 tint = (0.5 + 0.5 * cos(a + vec3(0.0, 2.0944, 4.1888))) * dot(c, vec3(0.2126, 0.7152, 0.0722)) * 2.0;
+    return mix(r, tint, grey * 0.65);
+}
 // Regular polygon / star with tips at radius R and inner corners at Rin; a tip points up.
 float sdStarPoly(vec2 p, float R, float Rin, float n, float rot) {
     float an = 3.14159265 / n;
@@ -884,7 +908,11 @@ float sdStarPoly(vec2 p, float R, float Rin, float n, float rot) {
     return (e.x * w.y - e.y * w.x) < 0.0 ? -d : d;
 }
 void main() {
-    if (vParam.y > 0.5) { fragColor = textureLod(tex0, vUv, 0.0); return; }  // image particle, as-is
+    if (vParam.y > 0.5) {  // image particle, as-is (premultiplied)
+        vec4 img = textureLod(tex0, vUv, 0.0);
+        fragColor = vec4(min(rainbow(img.rgb), vec3(img.a)), img.a);
+        return;
+    }
     vec2 p = vLocal;
     float type = vShape.x, R = vShape.y;
     float d;
@@ -901,7 +929,8 @@ void main() {
     float sw = vStroke.w;
     float strokeCov = sw > 0.0 ? clamp(0.5 - (d - sw * 0.5), 0.0, 1.0) - clamp(0.5 - (d + sw * 0.5), 0.0, 1.0) : 0.0;
     vec3 rgb = vFill.rgb * fillCov + vStroke.rgb * strokeCov * (1.0 - fillCov);
-    fragColor = vec4(rgb, fillCov + strokeCov * (1.0 - fillCov));
+    float a = fillCov + strokeCov * (1.0 - fillCov);
+    fragColor = vec4(min(rainbow(rgb), vec3(a)), a);
 }
 """
         private const val LINE_VS = """#version 300 es
@@ -933,10 +962,22 @@ in float vAcross;
 flat in float vWidth;
 flat in vec4 vColor;
 out vec4 fragColor;
+uniform vec4 uRainbow;  // RGB rainbow: hue angle, wave (radians per pixel across), on
+vec3 rainbow(vec3 c) {
+    if (uRainbow.z == 0.0) return c;
+    float a = uRainbow.x + uRainbow.y * gl_FragCoord.x;
+    const vec3 k = vec3(0.57735);
+    float ca = cos(a);
+    vec3 r = c * ca + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - ca);
+    float hi = max(c.r, max(c.g, c.b)), lo = min(c.r, min(c.g, c.b));
+    float grey = hi > 0.0 ? 1.0 - (hi - lo) / hi : 1.0;  // greys and whites take on the rainbow too
+    vec3 tint = (0.5 + 0.5 * cos(a + vec3(0.0, 2.0944, 4.1888))) * dot(c, vec3(0.2126, 0.7152, 0.0722)) * 2.0;
+    return mix(r, tint, grey * 0.65);
+}
 void main() {
     float cov = clamp(vWidth * 0.5 + 0.5 - abs(vAcross), 0.0, 1.0);
     float a = vColor.a * cov;
-    fragColor = vec4(vColor.rgb * a, a);
+    fragColor = vec4(min(rainbow(vColor.rgb * a), vec3(a)), a);
 }
 """
         private const val BG_FS = """#version 300 es
@@ -946,10 +987,23 @@ uniform sampler2D tex0;
 uniform vec4 uXform;
 uniform float uRepeat;
 out vec4 fragColor;
+uniform vec4 uRainbow;  // RGB rainbow: hue angle, wave (radians per pixel across), on
+vec3 rainbow(vec3 c) {
+    if (uRainbow.z == 0.0) return c;
+    float a = uRainbow.x + uRainbow.y * gl_FragCoord.x;
+    const vec3 k = vec3(0.57735);
+    float ca = cos(a);
+    vec3 r = c * ca + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - ca);
+    float hi = max(c.r, max(c.g, c.b)), lo = min(c.r, min(c.g, c.b));
+    float grey = hi > 0.0 ? 1.0 - (hi - lo) / hi : 1.0;  // greys and whites take on the rainbow too
+    vec3 tint = (0.5 + 0.5 * cos(a + vec3(0.0, 2.0944, 4.1888))) * dot(c, vec3(0.2126, 0.7152, 0.0722)) * 2.0;
+    return mix(r, tint, grey * 0.65);
+}
 void main() {
     vec2 t = vUv * uXform.xy + uXform.zw;
     float inside = uRepeat > 0.5 ? 1.0 : step(0.0, t.x) * step(t.x, 1.0) * step(0.0, t.y) * step(t.y, 1.0);
-    fragColor = texture(tex0, t) * inside;
+    vec4 c = texture(tex0, t) * inside;
+    fragColor = vec4(rainbow(c.rgb), c.a);
 }
 """
     }

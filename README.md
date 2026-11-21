@@ -57,8 +57,8 @@ The Android app has every bundled wallpaper: all the shaders and all the particl
 
 **Install**: open the [latest release](https://github.com/mybugga/LiteWallpaper/releases/latest) on your phone and download `LiteWallpaper-<version>.apk`. Open it, and when Android asks, allow your browser to install apps. Google Play Protect may say it hasn't seen the app before and suggest a scan, as it does for most apps from outside the Play Store: choose **Scan app**, or **More details** and **Install without scanning**. Then open LiteWallpaper, pick a wallpaper and tap **Set as wallpaper**. Android shows a preview; choose **Set wallpaper** for the home screen, or the home and lock screens.
 
-**The app** shows the selected wallpaper full screen, playing live. Swipe left or right to go through them, or tap one in the strip at the bottom. **Set as wallpaper** uses it; the sliders button next to it changes its speed, hue, saturation and brightness while you watch, and the gear opens the settings for all wallpapers:
-- **Frame rate**: 15, 24, 30 (default) or 60 fps.
+**The app** shows the selected wallpaper full screen, playing live. Swipe left or right to go through them, or tap one in the strip at the bottom. **Set as wallpaper** uses it; the sliders button next to it changes its speed, hue, saturation and brightness while you watch, and turns on **Rainbow colors** (Cycle or Wave, with a speed), for particle effects too, and the gear opens the settings for all wallpapers:
+- **Frame rate**: 15, 30 (default) or 60 fps, plus whatever faster rates your screen has (90, 120, 144 Hz...). Above 60, the screen runs at that rate while the wallpaper shows.
 - **Resolution**: how many of the screen's pixels it draws (75% by default; phone screens are dense, so it still looks sharp), scaled up smoothly.
 - **Pause in battery saver** (on by default).
 - **Scroll with home screen pages** (off by default): see below.
@@ -116,6 +116,7 @@ Double-click the tray icon, choose **Settings...**, or run `LiteWallpaper.exe` a
 - **Particles:** color (or random), amount, shape, sides, size, opacity, twinkle/pulse, outline. Also lines (on/off, color, distance, width, opacity), motion (speed, direction, edge wrap/bounce, straight, bounce, attract), mouse (hover and click effects plus their distances), and background (color, image, size, position, particle image).
 - **Shaders:** speed, hue, saturation, brightness, render resolution. These work on any shader, including your own.
 - **Images/videos:** fit.
+- **Rainbow:** RGB rainbow colors for any wallpaper (shaders, particle effects, pictures and GIFs; not videos). **Cycle** turns every color round the rainbow together; **Wave** sweeps a rainbow across the screen. Greys and whites take on the rainbow too, and **Rainbow speed** sets how fast (100% = once round every 6 seconds).
 - **General:** frame rate, the pause rules, extra programs to pause for, start with Windows, start for all users.
 
 ### Profiles

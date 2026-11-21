@@ -127,6 +127,19 @@ struct FrameConstants {
     float resX, resY, time, frame;
     float uvScaleX, uvScaleY, uvOffsetX, uvOffsetY;
     float extra[4];
+    float rainbow[4];  // RGB rainbow mode: hue angle (radians), wave (radians across the screen), on, 0
+};
+
+// The settings window's RGB rainbow mode for one wallpaper (shaders, particle effects, pictures):
+// 0 off, 1 cycle (every color changes together), 2 wave (a rainbow sweeping across the screen).
+struct Rainbow {
+    int mode = 0;
+    float speed = 1;  // 1 = once round the rainbow every 6 seconds
+    static Rainbow For(const std::wstring& wallpaperPath);
+    bool On() const { return mode != 0; }
+    void Fill(double seconds, float out[4]) const;
+    // The same color change on the CPU, for a flat color (the middle of the screen, for the wave).
+    static void Apply(const float rainbow[4], float rgb[3]);
 };
 
 class Source;

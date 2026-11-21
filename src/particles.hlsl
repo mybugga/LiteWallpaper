@@ -7,7 +7,9 @@ cbuffer Globals : register(b0) {
     float iFrame;
     float4 uvXform;
     float4 extra;  // x = background repeat
+    float4 rainbow;
 };
+#include "rainbow.hlsli"
 
 Texture2D tex0 : register(t0);
 SamplerState smp0 : register(s0);
@@ -66,7 +68,10 @@ float SdStarPoly(float2 p, float R, float Rin, float n, float rot) {
 }
 
 float4 PSParticle(PartOut i) : SV_Target {
-    if (i.param.y > 0.5) return tex0.SampleLevel(smp0, i.uv, 0);  // image particle, drawn as-is
+    if (i.param.y > 0.5) {  // image particle, drawn as-is (premultiplied)
+        float4 img = tex0.SampleLevel(smp0, i.uv, 0);
+        return float4(min(Rainbow(img.rgb, i.pos.xy), img.a), img.a);
+    }
 
     float2 p = i.local;
     float type = i.shape.x, R = i.shape.y;
@@ -87,7 +92,7 @@ float4 PSParticle(PartOut i) : SV_Target {
     float strokeCov = sw > 0 ? saturate(0.5 - (d - sw * 0.5)) - saturate(0.5 - (d + sw * 0.5)) : 0;
     float3 rgb = i.fill.rgb * fillCov + i.stroke.rgb * strokeCov * (1 - fillCov);
     float a = fillCov + strokeCov * (1 - fillCov);
-    return float4(rgb, a);
+    return float4(min(Rainbow(rgb, i.pos.xy), a), a);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -127,7 +132,7 @@ LineOut VSLine(LineIn i) {
 float4 PSLine(LineOut i) : SV_Target {
     float cov = saturate(i.width * 0.5 + 0.5 - abs(i.across));
     float a = i.color.a * cov;
-    return float4(i.color.rgb * a, a);
+    return float4(min(Rainbow(i.color.rgb * a, i.pos.xy), a), a);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -136,5 +141,6 @@ float4 PSLine(LineOut i) : SV_Target {
 float4 PSBackground(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target {
     float2 t = uv * uvXform.xy + uvXform.zw;
     float inside = extra.x > 0.5 ? 1 : step(0, t.x) * step(t.x, 1) * step(0, t.y) * step(t.y, 1);
-    return tex0.Sample(smp0, t) * inside;
+    float4 c = tex0.Sample(smp0, t) * inside;
+    return float4(Rainbow(c.rgb, pos.xy), c.a);
 }

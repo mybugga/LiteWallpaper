@@ -5,7 +5,10 @@ cbuffer Globals : register(b0) {
     float iTime;
     float iFrame;
     float4 uvXform;  // xy = scale, zw = offset
+    float4 extra;
+    float4 rainbow;
 };
+#include "rainbow.hlsli"
 
 Texture2D tex0 : register(t0);
 SamplerState smp0 : register(s0);
@@ -25,7 +28,7 @@ VSOut VSMain(uint id : SV_VertexID) {
 
 float4 PSTex(VSOut i) : SV_Target {
     float2 t = i.uv * uvXform.xy + uvXform.zw;
-    float3 c = tex0.Sample(smp0, t).rgb;
+    float3 c = Rainbow(tex0.Sample(smp0, t).rgb, i.pos.xy);
     float inside = step(0, t.x) * step(t.x, 1) * step(0, t.y) * step(t.y, 1);  // letterbox bars
     return float4(c * inside, 1);
 }

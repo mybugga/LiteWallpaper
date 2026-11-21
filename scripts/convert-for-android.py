@@ -49,15 +49,17 @@ SPIRV_CROSS = tool("SPIRV_CROSS", "spirv-cross")
 _src = open(os.path.join(ROOT, "src", "sources.cpp"), encoding="utf-8").read()
 HEADER = re.search(r'kShaderHeader\[\] = R"\((.*?)\)";', _src, re.S).group(1)
 ADJUST = re.search(r"(float3 _Adjust\(float3 c\) \{.*?\n\})", _src, re.S).group(1)
+RAINBOW = re.search(r"(float3 _Rainbow\(float3 c, float2 fragCoord\) \{.*?\n\})", _src, re.S).group(1)
 # OpenGL's fragment coordinates already start bottom-left, like Shadertoy. _view.x shifts this
 # screen across a wider picture (a tall phone screen shows a slice of a wide wallpaper).
 FOOTER = (
     "\ncbuffer View : register(b1) { float4 _view; };\n"
     + ADJUST
+    + "\n" + RAINBOW
     + """
 float4 PSMain(float4 pos : SV_Position) : SV_Target {
     float2 fragCoord = float2(pos.x + _view.x, pos.y);
-    return float4(_Adjust(saturate(mainImage(fragCoord).rgb)), 1.0);
+    return float4(_Adjust(_Rainbow(saturate(mainImage(fragCoord).rgb), fragCoord)), 1.0);
 }
 """
 )

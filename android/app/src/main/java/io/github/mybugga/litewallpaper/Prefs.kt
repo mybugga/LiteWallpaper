@@ -57,7 +57,14 @@ class Prefs(context: Context) {
     fun saturation(id: String) = sp.getFloat("saturation:$id", 1f)
     fun brightness(id: String) = sp.getFloat("brightness:$id", 1f)
     fun setTweak(key: String, id: String, value: Float) = sp.edit { putFloat("$key:$id", value) }
-    fun resetTweaks(id: String) = sp.edit { listOf("speed", "hue", "saturation", "brightness").forEach { remove("$it:$id") } }
+    fun resetTweaks(id: String) = sp.edit {
+        listOf("speed", "hue", "saturation", "brightness", "rainbow", "rainbowSpeed").forEach { remove("$it:$id") }
+    }
+
+    /** RGB rainbow colors, for any wallpaper: 0 off, 1 cycle (every color together), 2 wave (sweeping across). */
+    fun rainbow(id: String) = sp.getInt("rainbow:$id", 0)
+    fun setRainbow(id: String, mode: Int) = sp.edit { putInt("rainbow:$id", mode) }
+    fun rainbowSpeed(id: String) = sp.getFloat("rainbowSpeed:$id", 1f)
 
     companion object {
         const val KEY_WALLPAPER = "wallpaper"

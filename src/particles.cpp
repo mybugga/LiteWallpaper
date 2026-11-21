@@ -276,6 +276,7 @@ class ParticleSource final : public Source {
 public:
     bool Load(Gpu& gpu, const std::wstring& path, const Config& cfg, std::wstring& err) {
         interval_ = 1.0 / cfg.fps;
+        rainbow_ = Rainbow::For(path);
         Json root;
         if (!LoadParticleJson(path, root, err)) return false;
         std::wstring dir = path.substr(0, path.find_last_of(L"\\/"));
@@ -847,7 +848,10 @@ private:
     void Render(Gpu& gpu, Screen& s, Sim& sim) {
         ID3D11DeviceContext* ctx = gpu.ctx.Get();
         const Settings& c = sim.s;
-        const float clear[4] = {c.bgColor.r, c.bgColor.g, c.bgColor.b, 1};
+        float bgRgb[3] = {c.bgColor.r, c.bgColor.g, c.bgColor.b}, rb[4];
+        rainbow_.Fill(last_, rb);
+        Rainbow::Apply(rb, bgRgb);  // the background color joins in the rainbow too
+        const float clear[4] = {bgRgb[0], bgRgb[1], bgRgb[2], 1};
         ctx->ClearRenderTargetView(s.rtv.Get(), clear);
         ctx->OMSetRenderTargets(1, s.rtv.GetAddressOf(), nullptr);
         D3D11_VIEWPORT vp{0, 0, (float)s.bw, (float)s.bh, 0, 1};
@@ -856,6 +860,7 @@ private:
         ctx->RSSetState(raster_.Get());
 
         FrameConstants fc{(float)s.bw, (float)s.bh, 0, 0, 1, 1, 0, 0, {0, 0, 0, 0}};
+        rainbow_.Fill(last_, fc.rainbow);
         float dpi = sim.retinaOn ? sim.pxratio : sim.drawScale;
         if (bg_) {
             ID3D11ShaderResourceView* srv = bg_->Srv(gpu);
@@ -970,6 +975,7 @@ private:
     std::unique_ptr<Picture> bg_, image_;
     bool interactive_ = false, buttonDown_ = false;
     double interval_ = 1.0 / 30, next_ = 0, last_ = 0;
+    Rainbow rainbow_;
     std::mt19937 rng_{std::random_device{}()};
     std::uniform_real_distribution<float> dist_{0.0f, 1.0f};
 

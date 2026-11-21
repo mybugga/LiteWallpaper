@@ -49,6 +49,7 @@ class GlRenderer(context: Context, private val tag: String) {
     private var skipMeasure = 0
     private var sampleFrames = 0
     private var lastPanDraw = 0L
+    private var requestedRate = -1f
     private val debuggable = app.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
 
     /** Called on the main thread with a wallpaper's id once its first frame is on the surface. */
@@ -82,6 +83,7 @@ class GlRenderer(context: Context, private val tag: String) {
 
     fun setSurface(s: Surface) = handler.post {
         surface = s
+        requestedRate = -1f
         makeWindowSurface()
         schedule()
     }
@@ -221,7 +223,7 @@ class GlRenderer(context: Context, private val tag: String) {
 
     /** The frame-rate setting, lowered while the phone is hot. */
     private fun fps(): Int {
-        val fps = prefs.fps.coerceIn(5, 120)
+        val fps = prefs.fps.coerceIn(5, 240)
         return when {
             thermal >= PowerManager.THERMAL_STATUS_SEVERE -> minOf(fps, 10)
             thermal >= PowerManager.THERMAL_STATUS_MODERATE -> minOf(fps, maxOf(10, fps / 2))
@@ -239,9 +241,21 @@ class GlRenderer(context: Context, private val tag: String) {
         else Choreographer.getInstance().postFrameCallback(frameCallback)
     }
 
+    /**
+     * Above 60 fps, asks Android to run the screen that fast while the wallpaper shows (90, 120, 144 Hz
+     * screens); otherwise leaves the refresh rate to the system, which saves battery.
+     */
+    private fun requestRefreshRate(fps: Int) {
+        val want = if (fps > 60) fps.toFloat() else 0f
+        if (want == requestedRate || Build.VERSION.SDK_INT < 30) return
+        requestedRate = want
+        runCatching { surface?.setFrameRate(want, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT) }
+    }
+
     private fun onFrame(nanos: Long) {
         scheduled = false
         if (!visible || windowSurface == EGL14.EGL_NO_SURFACE) return
+        requestRefreshRate(fps())
         val interval = 1e9 / fps()
         if (lastDraw != 0L && nanos - lastDraw < interval * 0.9) {  // not time yet: wait for a later vsync
             schedule()

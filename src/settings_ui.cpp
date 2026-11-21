@@ -341,6 +341,12 @@ std::vector<Section> SectionsFor(Type type) {
              .choices = {{L"Fill screen (crop)", "cover"}, {L"Fit screen (bars)", "contain"}, {L"Stretch", "stretch"}}},
         }});
     }
+    // RGB rainbow colors, for every kind of wallpaper (videos excepted: they go straight to the screen).
+    s.push_back({L"Rainbow", {
+        {.kind = Kind::Combo, .label = type == Type::Picture ? L"Rainbow colors (pictures and GIFs)" : L"Rainbow colors", .store = Store::Shader,
+         .key = "rainbow", .def = "0", .choices = {{L"Off", "0"}, {L"Cycle: every color changes together", "1"}, {L"Wave: a rainbow sweeps across", "2"}}},
+        {.kind = Kind::Slider, .label = L"Rainbow speed", .store = Store::Shader, .key = "rainbow_speed", .def = "1", .min = 10, .max = 300, .scale = 0.01f, .unit = L"%"},
+    }});
     s.push_back({L"General", GeneralRows()});
     return s;
 }
