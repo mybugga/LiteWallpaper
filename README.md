@@ -65,7 +65,7 @@ The Android app has every bundled wallpaper: all the shaders and all the particl
 
 **Tall screens**: a phone shows a slice of each wide picture, centred on its subject, on every home screen page. Turn on **Scroll with home screen pages** to pan across the whole picture as you swipe between pages instead (if your launcher scrolls wallpapers); the first page then shows the picture's left edge.
 
-**Battery**: Android tells the wallpaper when it's hidden (an app or game covers it, or the screen is off), and then it draws nothing at all. It also stops while battery saver is on, unless you turn that off.
+**Battery**: Android tells the wallpaper when it's hidden (an app or game covers it, or the screen is off), and then it draws nothing at all. It also stops while battery saver is on, unless you turn that off. Phones' graphics chips differ a lot, so the wallpaper measures how long its frames take on yours: a shader that needs more than a small share of the GPU (8 ms a frame at most) is drawn at a lower resolution until it fits, and goes back up when there's room, never above your **Resolution** setting. That keeps the launcher's own animations smooth over any wallpaper. When the phone reports it's getting hot, the frame rate drops too.
 
 **Particle effects** react to touch the way they do to the mouse on Windows: hold a finger on the screen for the hover effect and tap for the click effect.
 
