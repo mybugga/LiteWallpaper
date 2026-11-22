@@ -13,6 +13,10 @@ float2 ringPoint(float2 fragCoord, float2 center, float outer) {
     return center + float2(d.x, -d.y) * scale;
 }
 
+// The whole square picture, centred, `fill` of the screen's shorter side across (for pictures of a
+// subject cut out on black).
+float2 squarePoint(float2 fragCoord, float fill) { return ringPoint(fragCoord, kImg * 0.5, kImg.x * 0.43 / fill); }
+
 // The picture, black beyond its edges.
 float3 picture(float2 q) {
     float2 uv = q / kImg;

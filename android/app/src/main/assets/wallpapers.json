@@ -152,6 +152,19 @@
   "scale": 1.0
  },
  {
+  "id": "book_portal",
+  "name": "Book portal",
+  "kind": "shader",
+  "file": "shaders/book_portal.frag",
+  "textures": [
+   "shaders/assets/book_portal.jpg"
+  ],
+  "description": "An old book lying open, its pages cut into a gothic arch with a stair climbing to a sunlit autumn forest, and a girl in a red cloak walking up into it.",
+  "aspect": 0.45,
+  "focus": 0.5,
+  "scale": 1.0
+ },
+ {
   "id": "bottle",
   "name": "Bottle",
   "kind": "shader",
@@ -286,6 +299,19 @@
   "scale": 1.0
  },
  {
+  "id": "ghost_orchid",
+  "name": "Ghost orchid",
+  "kind": "shader",
+  "file": "shaders/ghost_orchid.frag",
+  "textures": [
+   "shaders/assets/ghost_orchid.jpg"
+  ],
+  "description": "Pale ghost orchids growing from a mossy branch, with three luna moths resting round them.",
+  "aspect": 0.45,
+  "focus": 0.5,
+  "scale": 1.0
+ },
+ {
   "id": "ghostship",
   "name": "Ghostship",
   "kind": "shader",
@@ -333,6 +359,19 @@
   "description": "A katana hangs in the dark while cherry blossom petals drift down around it, tumbling and swaying, some behind the blade and some in front, near ones soft as if out of focus and lit pink as they pass the blade's glow.",
   "aspect": 1.7778,
   "focus": 0.808,
+  "scale": 1.0
+ },
+ {
+  "id": "kitsune_broken",
+  "name": "Kitsune broken",
+  "kind": "shader",
+  "file": "shaders/kitsune_broken.frag",
+  "textures": [
+   "shaders/assets/kitsune_broken.jpg"
+  ],
+  "description": "A white fox mask, cracked and mended with gold, one ear shattered.",
+  "aspect": 0.45,
+  "focus": 0.5,
   "scale": 1.0
  },
  {
@@ -744,6 +783,19 @@
   "description": "Layered translucent ribbons drifting across a deep gradient.",
   "aspect": 1.7778,
   "focus": 0.5
+ },
+ {
+  "id": "whale_island",
+  "name": "Whale island",
+  "kind": "shader",
+  "file": "shaders/whale_island.frag",
+  "textures": [
+   "shaders/assets/whale_island.jpg"
+  ],
+  "description": "A humpback whale swimming through the dark with a forest growing on its back.",
+  "aspect": 0.45,
+  "focus": 0.5,
+  "scale": 1.0
  },
  {
   "id": "bubble",
