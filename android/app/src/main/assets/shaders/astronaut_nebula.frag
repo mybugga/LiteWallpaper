@@ -10,6 +10,7 @@ struct Globals
     highp vec4 _uvXform;
     highp vec4 _adjust;
     highp vec4 _rainbow;
+    highp vec4 iDate;
 };
 
 uniform Globals G;

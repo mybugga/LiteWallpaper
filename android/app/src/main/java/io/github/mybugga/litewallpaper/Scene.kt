@@ -71,7 +71,9 @@ interface Scene {
  * screen is tall, so it shows a slice of the wide picture: around its subject, or wherever the home
  * screen pages have scrolled to.
  */
-class ShaderScene(context: Context, private val wallpaper: Wallpaper, private val prefs: Prefs) : Scene {
+class ShaderScene(context: Context, private val wallpaper: Wallpaper, private val prefs: Prefs, tall: Boolean) : Scene {
+    /** The version for this screen's shape (a picture made for tall screens, if there is one). */
+    val variant = wallpaper.variant(tall)
     private val program: Int
     private val textures: List<Texture>
     private val locRes: Int
@@ -81,6 +83,8 @@ class ShaderScene(context: Context, private val wallpaper: Wallpaper, private va
     private val locAdjust: Int
     private val locView: Int
     private val locRainbow: Int
+    private val locDate: Int
+    private val calendar = java.util.Calendar.getInstance()
     private val rainbow = FloatArray(4)
     private var rainbowTime = 0.0
     private val locTex = IntArray(2)
@@ -88,7 +92,7 @@ class ShaderScene(context: Context, private val wallpaper: Wallpaper, private va
     private var frames = 0
 
     init {
-        val source = context.assets.open(wallpaper.file).bufferedReader().use { it.readText() }
+        val source = context.assets.open(variant.file).bufferedReader().use { it.readText() }
         program = Gl.program(Gl.FULLSCREEN_VS, source)
         locRes = GLES30.glGetUniformLocation(program, "G.iResolution")
         locTime = GLES30.glGetUniformLocation(program, "G.iTime")
@@ -97,9 +101,10 @@ class ShaderScene(context: Context, private val wallpaper: Wallpaper, private va
         locAdjust = GLES30.glGetUniformLocation(program, "G._adjust")
         locView = GLES30.glGetUniformLocation(program, "V._view")
         locRainbow = GLES30.glGetUniformLocation(program, "G._rainbow")
+        locDate = GLES30.glGetUniformLocation(program, "G.iDate")
         locTex[0] = GLES30.glGetUniformLocation(program, "iChannel0")
         locTex[1] = GLES30.glGetUniformLocation(program, "iChannel1")
-        textures = wallpaper.textures.take(2).map { path ->
+        textures = variant.textures.take(2).map { path ->
             val bmp = Gl.bitmap(context, path, MAX_TEXTURE)
             Gl.texture(bmp).also { bmp.recycle() }
         }
@@ -113,9 +118,9 @@ class ShaderScene(context: Context, private val wallpaper: Wallpaper, private va
         val w = frame.width.toFloat()
         val h = frame.height.toFloat()
         // The whole picture, as wide as its own shape at this height; this screen is a window onto it.
-        val wide = maxOf(w, h * wallpaper.aspect)
+        val wide = maxOf(w, h * variant.aspect)
         val spare = wide - w
-        val offset = if (frame.pagePan >= 0f) frame.pagePan * spare else (wallpaper.focus * wide - w / 2).coerceIn(0f, spare)
+        val offset = if (frame.pagePan >= 0f) frame.pagePan * spare else (variant.focus * wide - w / 2).coerceIn(0f, spare)
 
         GLES30.glUseProgram(program)
         GLES30.glUniform2f(locRes, wide, h)
@@ -126,6 +131,13 @@ class ShaderScene(context: Context, private val wallpaper: Wallpaper, private va
         GLES30.glUniform4f(locView, offset, 0f, 0f, 0f)
         Rainbow.at(prefs.rainbow(id), prefs.rainbowSpeed(id), rainbowTime, rainbow)
         GLES30.glUniform4f(locRainbow, rainbow[0], rainbow[1], rainbow[2], rainbow[3])
+        if (locDate >= 0) {  // clocks: the local date and time, like Shadertoy's iDate
+            calendar.timeInMillis = System.currentTimeMillis()
+            val secs = calendar.get(java.util.Calendar.HOUR_OF_DAY) * 3600f + calendar.get(java.util.Calendar.MINUTE) * 60f +
+                calendar.get(java.util.Calendar.SECOND) + calendar.get(java.util.Calendar.MILLISECOND) / 1000f
+            GLES30.glUniform4f(locDate, calendar.get(java.util.Calendar.YEAR).toFloat(),
+                (calendar.get(java.util.Calendar.MONTH) + 1).toFloat(), calendar.get(java.util.Calendar.DAY_OF_MONTH).toFloat(), secs)
+        }
         textures.forEachIndexed { i, t ->
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0 + i)
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, t.id)

@@ -103,6 +103,9 @@ void CleanUpOldUpdate();
 
 // ---- render.cpp: LiteWallpaper.exe --render, frames for the README previews ----
 int RenderFrames(int argc, wchar_t** argv);
+// While rendering offline (faster than real time): the time of day clocks show, in seconds since
+// midnight, following the rendered frames. Below 0, clocks show the real local time.
+extern double g_clockOverride;
 
 // ---- gallery.cpp: grid of live wallpaper previews ----
 void ShowGallery();        // opens it in its own process
@@ -128,6 +131,7 @@ struct FrameConstants {
     float uvScaleX, uvScaleY, uvOffsetX, uvOffsetY;
     float extra[4];
     float rainbow[4];  // RGB rainbow mode: hue angle (radians), wave (radians across the screen), on, 0
+    float date[4];     // shaders' iDate: local year, month (1-12), day, seconds since midnight
 };
 
 // The settings window's RGB rainbow mode for one wallpaper (shaders, particle effects, pictures):

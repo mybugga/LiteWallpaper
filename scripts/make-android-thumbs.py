@@ -47,6 +47,20 @@ def render(exe, source, w, h, css_width=None):
         os.remove(raw)
 
 
+def portrait_copy(path):
+    """The shader as the phone app builds it for tall screens: PORTRAIT defined, its portrait
+    pictures in place of the wide ones. Written next to it (its includes resolve the same)."""
+    import re
+    code = open(path, encoding="utf-8").read()
+    for wide_key, tall_key in (("texture", "texture_portrait"), ("texture1", "texture1_portrait")):
+        m = re.search(r"^// " + tall_key + r":\s*(.+?)\s*$", code, re.M)
+        if m:
+            code = re.sub(r"^// " + wide_key + r":.*$", "// " + wide_key + ": " + m.group(1), code, count=1, flags=re.M)
+    out = os.path.join(os.path.dirname(path), "zz_thumb_portrait.hlsl")
+    open(out, "w", encoding="utf-8").write("#define PORTRAIT 1\n" + code)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--exe", default=os.path.join(ROOT, "LiteWallpaper.exe"))
@@ -66,9 +80,17 @@ def main():
         if wp["kind"] == "particles":
             img = render(a.exe, os.path.join(ROOT, wp["file"]), w, h, PHONE_CSS_WIDTH * DRAW)
         else:
-            aspect, focus = wp.get("aspect", 16 / 9), wp.get("focus", 0.5)
+            v = wp.get("portrait") or wp  # a phone held upright shows the version for tall screens
+            aspect, focus = v.get("aspect", 16 / 9), v.get("focus", 0.5)
             wide = max(w, round(h * aspect / 2) * 2)
-            full = render(a.exe, os.path.join(ROOT, "shaders", wp["id"] + ".hlsl"), wide, h)
+            src = os.path.join(ROOT, "shaders", wp["id"] + ".hlsl")
+            if "portrait" in wp:
+                src = portrait_copy(src)
+            try:
+                full = render(a.exe, src, wide, h)
+            finally:
+                if "portrait" in wp:
+                    os.remove(src)
             if a.wide:
                 os.makedirs(a.wide, exist_ok=True)
                 full.save(os.path.join(a.wide, wp["id"] + ".jpg"), quality=88)

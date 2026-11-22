@@ -1,5 +1,28 @@
 [
  {
+  "id": "amethyst_clock",
+  "name": "Amethyst clock",
+  "kind": "shader",
+  "file": "shaders/amethyst_clock.frag",
+  "textures": [
+   "shaders/assets/amethyst_clock_plate.jpg",
+   "shaders/assets/amethyst_clock_hands.png"
+  ],
+  "description": "A clock set into an amethyst geode on a bronze stand, showing the real time: its rose-gold hands turn with the time of day and the seconds hand ticks.",
+  "aspect": 1.7778,
+  "focus": 0.576,
+  "scale": 1.0,
+  "portrait": {
+   "file": "shaders/amethyst_clock.portrait.frag",
+   "textures": [
+    "shaders/assets/amethyst_clock_plate.jpg",
+    "shaders/assets/amethyst_clock_hands.png"
+   ],
+   "aspect": 0.45,
+   "focus": 0.5
+  }
+ },
+ {
   "id": "armillary",
   "name": "Armillary",
   "kind": "shader",
@@ -90,6 +113,29 @@
   "description": "Slow curtains of light over a starry night sky.",
   "aspect": 1.7778,
   "focus": 0.5
+ },
+ {
+  "id": "betta",
+  "name": "Betta",
+  "kind": "shader",
+  "file": "shaders/betta.frag",
+  "textures": [
+   "shaders/assets/betta.jpg",
+   "shaders/assets/betta_fx.png"
+  ],
+  "description": "A red and blue fighting fish hanging in the dark water.",
+  "aspect": 1.7778,
+  "focus": 0.72,
+  "scale": 1.0,
+  "portrait": {
+   "file": "shaders/betta.portrait.frag",
+   "textures": [
+    "shaders/assets/betta_portrait.jpg",
+    "shaders/assets/betta_portrait_fx.png"
+   ],
+   "aspect": 0.5625,
+   "focus": 0.3
+  }
  },
  {
   "id": "book",
@@ -187,6 +233,29 @@
   "aspect": 1.7778,
   "focus": 0.69,
   "scale": 1.0
+ },
+ {
+  "id": "dragon_clock",
+  "name": "Dragon clock",
+  "kind": "shader",
+  "file": "shaders/dragon_clock.frag",
+  "textures": [
+   "shaders/assets/dragon_clock_plate.jpg",
+   "shaders/assets/dragon_clock_hands.png"
+  ],
+  "description": "A green dragon asleep, curled round a bronze clock on a slab of slate.",
+  "aspect": 1.7778,
+  "focus": 0.55,
+  "scale": 1.0,
+  "portrait": {
+   "file": "shaders/dragon_clock.portrait.frag",
+   "textures": [
+    "shaders/assets/dragon_clock_plate.jpg",
+    "shaders/assets/dragon_clock_hands.png"
+   ],
+   "aspect": 0.45,
+   "focus": 0.5
+  }
  },
  {
   "id": "feather",
@@ -319,6 +388,52 @@
   "aspect": 1.7778,
   "focus": 0.752,
   "scale": 1.0
+ },
+ {
+  "id": "moon",
+  "name": "Moon",
+  "kind": "shader",
+  "file": "shaders/moon.frag",
+  "textures": [
+   "shaders/assets/moon.jpg",
+   "shaders/assets/moon_fx.png"
+  ],
+  "description": "The moon close up against black space, its edge lit blue-white.",
+  "aspect": 1.7778,
+  "focus": 0.8,
+  "scale": 1.0,
+  "portrait": {
+   "file": "shaders/moon.portrait.frag",
+   "textures": [
+    "shaders/assets/moon_portrait.jpg",
+    "shaders/assets/moon_portrait_fx.png"
+   ],
+   "aspect": 0.5625,
+   "focus": 0.6
+  }
+ },
+ {
+  "id": "northern_lights",
+  "name": "Northern lights",
+  "kind": "shader",
+  "file": "shaders/northern_lights.frag",
+  "textures": [
+   "shaders/assets/northern_lights.jpg",
+   "shaders/assets/northern_lights_fx.png"
+  ],
+  "description": "Green aurora over snowy mountains and a still lake.",
+  "aspect": 1.7778,
+  "focus": 0.3,
+  "scale": 1.0,
+  "portrait": {
+   "file": "shaders/northern_lights.portrait.frag",
+   "textures": [
+    "shaders/assets/northern_lights_portrait.jpg",
+    "shaders/assets/northern_lights_portrait_fx.png"
+   ],
+   "aspect": 0.5625,
+   "focus": 0.5
+  }
  },
  {
   "id": "planet_cosmic",
@@ -486,6 +601,46 @@
   "description": "Glossy glass ribbons twisting through the dark, with pink and blue light streaming to the right through them like light through fibre optics.",
   "aspect": 1.7778,
   "focus": 0.466,
+  "scale": 1.0
+ },
+ {
+  "id": "ring_gold",
+  "name": "Ring gold",
+  "kind": "shader",
+  "file": "shaders/ring_gold.frag",
+  "textures": [
+   "shaders/assets/ring_gold.jpg"
+  ],
+  "description": "An art-deco ring of brushed gold, its grooved bands joined by chevrons.",
+  "aspect": 0.45,
+  "focus": 0.5,
+  "scale": 1.0
+ },
+ {
+  "id": "ring_moon",
+  "name": "Ring moon",
+  "kind": "shader",
+  "file": "shaders/ring_moon.frag",
+  "textures": [
+   "shaders/assets/ring_moon.jpg",
+   "shaders/assets/ring_moon_fx.png"
+  ],
+  "description": "A ring of moon rock, cratered and grey, set between thin silver rims. The rock band slowly turns inside its rims while the light on it stays put, so its craters travel round, and glints of light slide along the polished silver.",
+  "aspect": 0.45,
+  "focus": 0.5,
+  "scale": 1.0
+ },
+ {
+  "id": "ring_neon",
+  "name": "Ring neon",
+  "kind": "shader",
+  "file": "shaders/ring_neon.frag",
+  "textures": [
+   "shaders/assets/ring_neon.jpg"
+  ],
+  "description": "A brushed-metal ring lit cyan and magenta on black. It slowly spins, so the coloured light travels round it, a bright glint runs round the brushed metal, and the neon glow breathes.",
+  "aspect": 0.45,
+  "focus": 0.5,
   "scale": 1.0
  },
  {

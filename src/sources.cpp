@@ -13,7 +13,7 @@
 
 // Wrapped around every user shader. Users write: float4 mainImage(float2 fragCoord)
 static const char kShaderHeader[] = R"(
-cbuffer Globals : register(b0) { float2 iResolution; float iTime; float iFrame; float4 _uvXform; float4 _adjust; float4 _rainbow; };
+cbuffer Globals : register(b0) { float2 iResolution; float iTime; float iFrame; float4 _uvXform; float4 _adjust; float4 _rainbow; float4 iDate; };
 Texture2D iChannel0 : register(t0);  // images named by "// texture:" and "// texture1:" lines, if any
 Texture2D iChannel1 : register(t1);
 SamplerState iSampler : register(s0);
@@ -256,6 +256,13 @@ public:
         FrameConstants c{(float)s.bw, (float)s.bh, (float)time_, frame_, 1, 1, 0, 0,
                          {adjust_.hue * 3.14159265f / 180, adjust_.saturation, adjust_.brightness, 0}};
         adjust_.rainbow.Fill(lastAnim_, c.rainbow);
+        SYSTEMTIME now;  // for clocks: the local date and time, like Shadertoy's iDate
+        GetLocalTime(&now);
+        c.date[0] = now.wYear;
+        c.date[1] = now.wMonth;
+        c.date[2] = now.wDay;
+        c.date[3] = now.wHour * 3600.0f + now.wMinute * 60.0f + now.wSecond + now.wMilliseconds / 1000.0f;
+        if (g_clockOverride >= 0) c.date[3] = (float)fmod(g_clockOverride, 86400.0);
         gpu.SetConstants(c);
         ID3D11ShaderResourceView* extra = hasTexture_[1] ? pic_[1].Srv(gpu) : nullptr;
         gpu.ctx->PSSetShaderResources(1, 1, &extra);  // DrawFullscreen binds slot 0

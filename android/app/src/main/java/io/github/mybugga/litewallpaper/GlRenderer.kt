@@ -89,6 +89,9 @@ class GlRenderer(context: Context, private val tag: String) {
     }
 
     fun setSize(w: Int, h: Int) = handler.post {
+        // A wallpaper with a picture for tall screens switches picture when the screen turns.
+        val s = scene
+        if (s is ShaderScene && wallpaper?.portrait != null && (h > w) != (height > width) && width > 0) releaseScene()
         width = w
         height = h
         lastDraw = 0
@@ -275,7 +278,7 @@ class GlRenderer(context: Context, private val tag: String) {
         val wp = wallpaper ?: return
         if (scene == null && !sceneFailed) {
             scene = try {
-                if (wp.kind == Wallpaper.Kind.Particles) ParticleScene(app, wp) else ShaderScene(app, wp, prefs)
+                if (wp.kind == Wallpaper.Kind.Particles) ParticleScene(app, wp) else ShaderScene(app, wp, prefs, height > width)
             } catch (e: Exception) {
                 Log.e(TAG, "Couldn't load ${wp.id}", e)
                 sceneFailed = true

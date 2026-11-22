@@ -85,7 +85,7 @@ def description(code):
             if not line.startswith("//"):
                 break
             line = line[2:].strip()
-            if not line or re.match(r"(texture1?|scale|focus|Available):", line):
+            if not line or re.match(r"(texture1?(_portrait)?|scale|focus(_portrait)?|aspect(_portrait)?|Available):", line):
                 break
             lines.append(line)
         d = " ".join(lines)
@@ -115,10 +115,10 @@ def focus(image_path):
     return round(mid / total, 3) if total > 0 else 0.5
 
 
-def convert(name, code, work):
+def convert(name, code, work, defines=""):
     wrapped = os.path.join(work, name + ".hlsl")
     with open(wrapped, "w", encoding="utf-8") as f:
-        f.write(HEADER + "\n" + code + "\n" + FOOTER)
+        f.write(defines + HEADER + "\n" + code + "\n" + FOOTER)
     spv = os.path.join(work, name + ".spv")
     frag = os.path.join(work, name + ".frag")
     r = subprocess.run([GLSLANG, "-D", "-V", "--auto-map-bindings", "--auto-map-locations", "-S", "frag", "-e", "PSMain",
@@ -190,7 +190,10 @@ def main():
             textures = [("shaders/" + option(code, k).replace("\\", "/")) for k in ("texture", "texture1") if option(code, k)]
             entry = {"id": name, "name": pretty(name), "kind": "shader", "file": "shaders/" + name + ".frag",
                      "textures": textures, "description": description(code)}
-            if textures:
+            if option(code, "aspect"):  # the shader frames itself to fit any screen
+                entry["aspect"] = float(option(code, "aspect"))
+                entry["focus"] = float(option(code, "focus") or 0.5)
+            elif textures:
                 first = os.path.join(ROOT, textures[0])
                 w, h = Image.open(first).size
                 entry["aspect"] = round(w / h, 4)
@@ -200,6 +203,22 @@ def main():
                 entry["focus"] = float(option(code, "focus") or 0.5)
             if option(code, "scale"):
                 entry["scale"] = float(option(code, "scale"))
+            # A picture made for tall screens: the same shader built with PORTRAIT defined, which
+            # uses that picture (and its own positions) on phones held upright.
+            portrait = option(code, "texture_portrait")
+            if portrait:
+                try:
+                    pglsl = convert(name + ".portrait", code, work, "#define PORTRAIT 1\n")
+                except RuntimeError as e:
+                    failed.append((name + " (portrait)", str(e)))
+                    continue
+                with open(os.path.join(out_shaders, name + ".portrait.frag"), "w", encoding="utf-8", newline="\n") as f:
+                    f.write(pglsl)
+                ptex = [("shaders/" + option(code, k).replace("\\", "/")) for k in ("texture_portrait", "texture1_portrait") if option(code, k)]
+                pw, ph = Image.open(os.path.join(ROOT, ptex[0])).size
+                paspect = float(option(code, "aspect_portrait")) if option(code, "aspect_portrait") else round(pw / ph, 4)
+                entry["portrait"] = {"file": "shaders/" + name + ".portrait.frag", "textures": ptex,
+                                     "aspect": paspect, "focus": float(option(code, "focus_portrait") or 0.5)}
             entries.append(entry)
             print(f"{name:22s} {len(glsl.splitlines()):5d} lines  focus {entry['focus']}")
 

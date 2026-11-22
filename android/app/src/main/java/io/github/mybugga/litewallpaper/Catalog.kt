@@ -15,8 +15,16 @@ data class Wallpaper(
     /** Where across the picture its subject is (0-1); a tall screen centres on it. */
     val focus: Float,
     val description: String,
+    /** A version made for tall screens, with its own picture (a phone held upright uses it). */
+    val portrait: Variant? = null,
 ) {
     enum class Kind { Shader, Particles }
+
+    /** The shader, pictures and framing to draw with. */
+    class Variant(val file: String, val textures: List<String>, val aspect: Float, val focus: Float)
+
+    /** The version to draw on a screen this shape. */
+    fun variant(tall: Boolean): Variant = if (tall && portrait != null) portrait else Variant(file, textures, aspect, focus)
 
     val thumbnail get() = "thumbs/$id.webp"
 }
@@ -48,6 +56,14 @@ object Catalog {
                 aspect = o.optDouble("aspect", 16.0 / 9).toFloat(),
                 focus = o.optDouble("focus", 0.5).toFloat(),
                 description = o.optString("description"),
+                portrait = o.optJSONObject("portrait")?.let { p ->
+                    Wallpaper.Variant(
+                        file = p.getString("file"),
+                        textures = p.optJSONArray("textures")?.let { t -> (0 until t.length()).map { t.getString(it) } } ?: emptyList(),
+                        aspect = p.optDouble("aspect", 9.0 / 16).toFloat(),
+                        focus = p.optDouble("focus", 0.5).toFloat(),
+                    )
+                },
             )
         }
     }

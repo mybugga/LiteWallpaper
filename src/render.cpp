@@ -6,6 +6,8 @@
 #include "app.h"
 #include <algorithm>
 
+double g_clockOverride = -1;
+
 int RenderFrames(int argc, wchar_t** argv) {
     if (argc < 4) return 1;
     std::wstring file = ResolvePath(argv[2]), out = argv[3];
@@ -55,8 +57,12 @@ int RenderFrames(int argc, wchar_t** argv) {
     src->active = true;
     src->SetActive(true, start);
     std::vector<BYTE> row(w * 4);
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    const double clockStart = now.wHour * 3600.0 + now.wMinute * 60.0 + now.wSecond + now.wMilliseconds / 1000.0;
     for (int i = -warmup; i < frames; ++i) {
         double t = start + (i + warmup) / fps;
+        g_clockOverride = clockStart + (t - start);  // clocks tick with the frames, not the wall clock
         src->Update(t, t);
         src->Draw(gpu, s);
         if (i < 0) continue;
